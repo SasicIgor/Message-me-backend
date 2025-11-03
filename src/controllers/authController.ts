@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { db } from "../db/neon/index.ts";
-import { users } from "../db/Neon/schema.ts";
+import { db } from "../db/neon/connection.ts";
+import { users } from "../db/neon/schema.ts";
 
 export const register = async (req: Request, res: Response) => {
   try {
