@@ -4,18 +4,31 @@
   "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node --watch src/index.ts"
+    "dev": "node --watch src/index.ts",
+    "db:gen": "drizzle-kit generate",
+    "db:run":"tsx src/db/neon/index.ts"
   },
-  "type":"module",
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
-    "express": "^5.1.0"
+    "drizzle-orm": "^0.44.7",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
-    "@types/express": "^5.0.5"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
+    "@types/morgan": "^1.9.10",
+    "@types/pg": "^8.15.6",
+    "drizzle-kit": "^0.31.6",
+    "tsx": "^4.20.6"
   }
 }
