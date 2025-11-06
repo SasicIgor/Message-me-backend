@@ -4,17 +4,25 @@ import {
   uuid,
   boolean,
   timestamp,
+  primaryKey,
+  uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-export const user = pgTable("user", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  username: varchar("username").notNull().unique(),
-  email: varchar("email").notNull().unique(),
-  password: varchar("password").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+export const user = pgTable(
+  "user",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    username: varchar("username").notNull().unique(),
+    email: varchar("email").notNull().unique(),
+    password: varchar("password").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => [uniqueIndex("username_idx").on(t.username)]
+);
 
 export const chat = pgTable("chat", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -22,26 +30,39 @@ export const chat = pgTable("chat", {
   isGroup: boolean("is_group").notNull(),
 });
 
-export const chat_member = pgTable("chat_member", {
-  userId: uuid("user_id")
-    .references(() => user.id)
-    .notNull(),
-  chatId: uuid("chat_id")
-    .references(() => chat.id)
-    .notNull(),
-});
+export const chat_member = pgTable(
+  "chat_member",
+  {
+    userId: uuid("user_id")
+      .references(() => user.id)
+      .notNull(),
+    chatId: uuid("chat_id")
+      .references(() => chat.id)
+      .notNull(),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.userId, t.chatId] }),
+  })
+);
 
-export const message = pgTable("message", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  chatId: uuid("chat_id")
-    .references(() => chat.id)
-    .notNull(),
-  senderId: uuid("user_id")
-    .references(() => user.id)
-    .notNull(),
-  content: varchar("content").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const message = pgTable(
+  "message",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    chatId: uuid("chat_id")
+      .references(() => chat.id)
+      .notNull(),
+    senderId: uuid("user_id")
+      .references(() => user.id)
+      .notNull(),
+    content: varchar("content").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    chatIdx: index("msg_chat").on(t.chatId),
+    createdAtIdx: index("created_at").on(t.createdAt),
+  })
+);
 
 //relations
 export const userRelations = relations(user, ({ many }) => ({
@@ -75,3 +96,10 @@ export const messageRelations = relations(message, ({ one }) => ({
     references: [chat.id],
   }),
 }));
+
+export type User = typeof user.$inferSelect;
+export type Chat = typeof chat.$inferSelect;
+export type Message = typeof message.$inferSelect;
+
+export const insertUserSchema = createInsertSchema(user);
+export const selectUser = createSelectSchema(user);
