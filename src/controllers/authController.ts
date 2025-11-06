@@ -1,10 +1,10 @@
 import type { Request, Response } from "express";
 import { db } from "../db/neon/connection.ts";
-import { users } from "../db/neon/schema.ts";
+import { user } from "../db/neon/schema.ts";
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const newUser = await db.insert(users).values(req.body).returning();
+    const newUser = await db.insert(user).values(req.body).returning();
     return res
       .status(201)
       .json({ message: "New user created!", user: newUser });
