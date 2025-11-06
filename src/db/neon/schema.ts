@@ -10,7 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-
+//users
 export const user = pgTable(
   "user",
   {
@@ -40,9 +40,7 @@ export const chat_member = pgTable(
       .references(() => chat.id)
       .notNull(),
   },
-  (t) => ({
-    pk: primaryKey({ columns: [t.userId, t.chatId] }),
-  })
+  (t) => [primaryKey({ columns: [t.userId, t.chatId] })]
 );
 
 export const message = pgTable(
@@ -58,10 +56,7 @@ export const message = pgTable(
     content: varchar("content").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (t) => ({
-    chatIdx: index("msg_chat").on(t.chatId),
-    createdAtIdx: index("created_at").on(t.createdAt),
-  })
+  (t) => [index("msg_chat").on(t.chatId), index("created_at").on(t.createdAt)]
 );
 
 //relations
