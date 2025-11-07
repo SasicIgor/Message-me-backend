@@ -28,3 +28,17 @@ export const registrationSchema = z
     (data) => data.password === data.confirmedPassword,
     "Password need to match"
   );
+
+export const loginSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(3, "Username must have at least 3 characters")
+    .max(20, "Username must be less then 20 characters"),
+  password: z
+    .string()
+    .regex(
+      passRegex,
+      "Password must have one upper letter, one lower case letter, one number and one special sign"
+    ),
+});

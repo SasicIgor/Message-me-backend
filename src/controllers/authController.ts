@@ -2,7 +2,8 @@ import type { Request, Response } from "express";
 import { db } from "../db/neon/connection.ts";
 import { user } from "../db/neon/schema.ts";
 import { generateToken } from "../utils/jwt.ts";
-import { hashPassword } from "../utils/password.ts";
+import { comparePassword, hashPassword } from "../utils/password.ts";
+import { eq } from "drizzle-orm";
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -10,8 +11,9 @@ export const register = async (req: Request, res: Response) => {
     if (password !== confirmedPassword) {
       res.status(401).json("Password must be the same as confirmed password");
     }
-    const hashedPassword = hashPassword(password);
+    const hashedPassword = await hashPassword(password);
 
+    console.log(hashedPassword);
     const [newUser] = await db
       .insert(user)
       .values({ ...req.body, password: hashedPassword })
@@ -20,10 +22,11 @@ export const register = async (req: Request, res: Response) => {
         username: user.username,
       });
 
-    console.log(newUser);
+    const token = await generateToken({
+      id: newUser.id,
+      username: newUser.username,
+    });
 
-    const token = await generateToken({ id: newUser.id, username: newUser.username });
-    console.log(token);
     return res
       .status(201)
       .json({ message: "New user created!", newUser, token });
@@ -34,7 +37,28 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
-  const data = await db.query.user.findMany();
-  console.log(data);
-  res.status(200).json("Successfully logged in");
+  try {
+    const { username, password } = req.body;
+    const [storedUser] = await db
+      .select()
+      .from(user)
+      .where(eq(user.username, username))
+      .limit(1);
+
+    if (!storedUser) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const isPassCorrect = await comparePassword(password, storedUser.password);
+    if (!isPassCorrect) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const token = await generateToken({ id: storedUser.id, username });
+
+    res.status(200).json({ message: "Successfully logged in", token });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json("Failed to log in user");
+  }
 };
