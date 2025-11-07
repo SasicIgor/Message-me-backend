@@ -22,7 +22,8 @@ export const register = async (req: Request, res: Response) => {
 
     console.log(newUser);
 
-    const token = generateToken({ id: newUser.id, username: newUser.username });
+    const token = await generateToken({ id: newUser.id, username: newUser.username });
+    console.log(token);
     return res
       .status(201)
       .json({ message: "New user created!", newUser, token });
