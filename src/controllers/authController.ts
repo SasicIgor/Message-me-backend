@@ -13,7 +13,6 @@ export const register = async (req: Request, res: Response) => {
     }
     const hashedPassword = await hashPassword(password);
 
-    console.log(hashedPassword);
     const [newUser] = await db
       .insert(user)
       .values({ ...req.body, password: hashedPassword })
@@ -31,7 +30,6 @@ export const register = async (req: Request, res: Response) => {
       .status(201)
       .json({ message: "New user created!", newUser, token });
   } catch (error) {
-    console.log(error);
     res.status(500).json("Failed to create user");
   }
 };
@@ -56,9 +54,14 @@ export const login = async (req: Request, res: Response) => {
 
     const token = await generateToken({ id: storedUser.id, username });
 
-    res.status(200).json({ message: "Successfully logged in", token });
+    res
+      .status(200)
+      .json({
+        message: "Successfully logged in",
+        token,
+        user: { username, id: storedUser.id },
+      });
   } catch (error) {
-    console.log(error);
     res.status(500).json("Failed to log in user");
   }
 };
