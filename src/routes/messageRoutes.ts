@@ -1,10 +1,9 @@
 import { Router } from "express";
 import { authMiddleware } from "../middleware/auth.ts";
+import { createMessage } from "../controllers/messageController.ts";
 
 const router = Router();
 
-router.get("/messages", authMiddleware, (req, res) => {
-  res.status(201).json({ message: "something" });
-});
+router.post("/messages/:chatId", createMessage);
 
 export default router;

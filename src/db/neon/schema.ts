@@ -94,7 +94,8 @@ export const messageRelations = relations(message, ({ one }) => ({
 
 export type User = typeof user.$inferSelect;
 export type Chat = typeof chat.$inferSelect;
-export type Message = typeof message.$inferSelect;
+export type Message = typeof message.$inferInsert;
+export type ChatMember = typeof chat_member.$inferSelect;
 
 export const insertUserSchema = createInsertSchema(user);
 export const selectUser = createSelectSchema(user);
