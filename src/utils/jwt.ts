@@ -22,9 +22,9 @@ export const generateToken = (payload: JWTPayload) => {
     .sign(secretKey);
 };
 
-export const verifyToken = async (token: string) => {
+export const verifyToken = async (token: string): Promise<JWTPayload> => {
   const secret = tokenSecret();
-  const { payload } = await jwtVerify<JWTPayload>(token, secret);
+  const { payload } = await jwtVerify(token, secret);
   console.log(payload);
-  return payload;
+  return { id: payload.id as string, username: payload.username as string };
 };

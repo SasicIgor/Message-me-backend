@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
 import { db } from "../db/neon/connection.ts";
-import { chat_member, message } from "../db/neon/schema.ts";
+import { chat, chat_member, message } from "../db/neon/schema.ts";
 import { eq, and, desc, inArray } from "drizzle-orm";
-import { AuthenticatedRequest } from "../middleware/auth.ts";
+import { type AuthenticatedRequest } from "../middleware/auth.ts";
 
 const isMember = async (userId: string, chatId: string): Promise<boolean> => {
   const member = await db.query.chat_member.findFirst({
@@ -13,19 +13,23 @@ const isMember = async (userId: string, chatId: string): Promise<boolean> => {
 
 export const getMessages = async (req: AuthenticatedRequest, res: Response) => {
   try {
+    const userId = req.user!.id;
     const { chatId } = req.params;
-    const checkMember = await isMember(req.user!.id, chatId);
+    if (!chatId) {
+      return res.status(400).json({ message: "Bad request" });
+    }
 
+    const checkMember = await isMember(userId, chatId);
     if (!checkMember) {
       res.status(403).json({ message: "Forbidden access!" });
     }
 
-    const messages = await db.query.message.findMany({
+    const msgs = await db.query.message.findMany({
       where: eq(message.chatId, chatId),
       orderBy: [desc(message.createdAt)],
     });
 
-    res.status(200).json({ message: "All good baby.", messages });
+    res.status(200).json({ message: "All good baby.", msgs });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Server error" });
@@ -37,10 +41,17 @@ export const createMessage = async (
   res: Response
 ) => {
   try {
+    const userId = req.user!.id;
     const { chatId } = req.params;
     if (!chatId) {
       return res.status(400).json({ message: "Bad request" });
     }
+
+    const checkMember = await isMember(userId, chatId);
+    if (!checkMember) {
+      res.status(403).json({ message: "Forbidden access!" });
+    }
+
     const msg = await db
       .insert(message)
       .values({ ...req.body, chatId })
@@ -51,9 +62,38 @@ export const createMessage = async (
     res.status(500).json({ message: "Something went wrong" });
   }
 };
-export const editMessage = (req: Request, res: Response) => {
+export const editMessage = async (req: AuthenticatedRequest, res: Response) => {
   try {
-  } catch (error) {}
+    console.log(1);
+    const userId = req.user!.id;
+    const { chatId } = req.params;
+    if (!chatId) {
+      return res.status(400).json({ message: "Bad request" });
+    }
+    console.log(2);
+
+    const checkMember = await isMember(userId, chatId);
+    if (!checkMember) {
+      res.status(403).json({ message: "Forbidden access!" });
+    }
+    console.log(3);
+
+    const content = req.body.content;
+
+    const [msg] = await db
+      .update(message)
+      .set({ content })
+      .where(and(eq(message.chatId, chatId), eq(message.senderId, userId)))
+      .returning();
+    if (!msg) {
+      res.status(403).json({ message: "Bad request. No messasge to update" });
+    }
+
+    res.status(201).json({ message: "Message updated", msg });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "server error" });
+  }
 };
 export const deleteMessage = (req: Request, res: Response) => {
   try {

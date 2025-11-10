@@ -14,15 +14,15 @@ const seed = async () => {
 
   try {
     console.log("Clearing existing data...");
-    await db.delete(user);
-    await db.delete(chat);
-    await db.delete(chat_member);
     await db.delete(message);
+    await db.delete(chat_member);
+    await db.delete(chat);
+    await db.delete(user);
 
     //=====INSERTING USERS=====
 
     const userData = Array.from({ length: 10 }, (_, i) => ({
-      username: faker.person.fullName(),
+      username: faker.person.firstName(),
       email: faker.internet.email(),
       password: faker.internet.password(),
     }));
@@ -77,7 +77,7 @@ const seed = async () => {
     await db.insert(chat_member).values(chatMembers).returning();
 
     //===== INSERTING MESSAGES =====
-    
+
     console.log("Creating messages");
     const messageData: Message[] = [];
     for (const member of chatMembers) {

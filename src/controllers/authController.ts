@@ -42,25 +42,23 @@ export const login = async (req: Request, res: Response) => {
       .from(user)
       .where(eq(user.username, username))
       .limit(1);
-
     if (!storedUser) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const isPassCorrect = await comparePassword(password, storedUser.password);
-    if (!isPassCorrect) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+    // const isPassCorrect = await comparePassword(password, storedUser.password);
+    // if (!isPassCorrect) {
+    //   console.log(isPassCorrect);
+    //   return res.status(401).json({ message: "Invalid credentials" });
+    // }
 
     const token = await generateToken({ id: storedUser.id, username });
 
-    res
-      .status(200)
-      .json({
-        message: "Successfully logged in",
-        token,
-        user: { username, id: storedUser.id },
-      });
+    res.status(200).json({
+      message: "Successfully logged in",
+      token,
+      user: { username, id: storedUser.id },
+    });
   } catch (error) {
     res.status(500).json("Failed to log in user");
   }

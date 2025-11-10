@@ -21,7 +21,7 @@ export const authMiddleware = async (
     const token = authHeaeder.split(" ")[1];
 
     if (!token) {
-      return next("Forbidden access!");
+      return res.status(401).json({message:"Access token required!"});
     }
 
     const payload = await verifyToken(token);
@@ -30,6 +30,6 @@ export const authMiddleware = async (
     req.user = payload;
     next();
   } catch (error) {
-    res.status(401).json({ message: "Forbidden access" });
+    res.status(403).json({ message: "Invalid or expired token" });
   }
 };
