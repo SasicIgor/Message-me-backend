@@ -1,38 +1,23 @@
 import type { Request, Response } from "express";
 import { db } from "../db/neon/connection.ts";
-import { chat, chat_member, message } from "../db/neon/schema.ts";
+import { message } from "../db/neon/schema.ts";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { type AuthenticatedRequest } from "../middleware/auth.ts";
-
-const isMember = async (userId: string, chatId: string): Promise<boolean> => {
-  const member = await db.query.chat_member.findFirst({
-    where: and(eq(chat_member.userId, userId), eq(chat_member.chatId, chatId)),
-  });
-  return member ? true : false;
-};
+import { getUserAndChat } from "../utils/getUserAndChat.ts";
 
 export const getMessages = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.user!.id;
-    const { chatId } = req.params;
-    if (!chatId) {
-      return res.status(400).json({ message: "Bad request" });
-    }
-
-    const checkMember = await isMember(userId, chatId);
-    if (!checkMember) {
-      res.status(403).json({ message: "Forbidden access!" });
-    }
+    const { chatId, userId } = getUserAndChat(req);
 
     const msgs = await db.query.message.findMany({
-      where: eq(message.chatId, chatId),
+      where: and(eq(message.chatId, chatId), eq(message.senderId, userId)),
       orderBy: [desc(message.createdAt)],
     });
 
-    res.status(200).json({ message: "All good baby.", msgs });
+    return res.status(200).json({ message: "All good baby.", msgs });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -41,61 +26,72 @@ export const createMessage = async (
   res: Response
 ) => {
   try {
-    const userId = req.user!.id;
-    const { chatId } = req.params;
-    if (!chatId) {
-      return res.status(400).json({ message: "Bad request" });
-    }
-
-    const checkMember = await isMember(userId, chatId);
-    if (!checkMember) {
-      res.status(403).json({ message: "Forbidden access!" });
-    }
+    const { chatId, userId } = getUserAndChat(req);
 
     const msg = await db
       .insert(message)
-      .values({ ...req.body, chatId })
+      .values({ ...req.body, chatId, senderId: userId })
       .returning();
-    res.status(201).json({ message: "Message created", msg });
+    return res.status(201).json({ message: "Message created", msg });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Something went wrong" });
+    return res.status(500).json({ message: "Something went wrong" });
   }
 };
 export const editMessage = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    console.log(1);
-    const userId = req.user!.id;
-    const { chatId } = req.params;
-    if (!chatId) {
-      return res.status(400).json({ message: "Bad request" });
-    }
-    console.log(2);
+    const { chatId, userId } = getUserAndChat(req);
 
-    const checkMember = await isMember(userId, chatId);
-    if (!checkMember) {
-      res.status(403).json({ message: "Forbidden access!" });
-    }
-    console.log(3);
-
-    const content = req.body.content;
+    const { content, id } = req.body;
 
     const [msg] = await db
       .update(message)
       .set({ content })
-      .where(and(eq(message.chatId, chatId), eq(message.senderId, userId)))
+      .where(
+        and(
+          eq(message.id, id),
+          eq(message.chatId, chatId),
+          eq(message.senderId, userId)
+        )
+      )
       .returning();
     if (!msg) {
-      res.status(403).json({ message: "Bad request. No messasge to update" });
+      return res
+        .status(403)
+        .json({ message: "Bad request. No messasge to update" });
     }
 
-    res.status(201).json({ message: "Message updated", msg });
+    return res.status(201).json({ message: "Message updated", msg });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "server error" });
+    return res.status(500).json({ message: "server error" });
   }
 };
-export const deleteMessage = (req: Request, res: Response) => {
+export const deleteMessage = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-  } catch (error) {}
+    const { chatId, userId } = getUserAndChat(req);
+    const [msg] = await db
+      .delete(message)
+      .where(
+        and(
+          eq(message.id, req.body.id),
+          eq(message.chatId, chatId),
+          eq(message.senderId, userId)
+        )
+      )
+      .returning();
+    if (!msg) {
+      return res
+        .status(403)
+        .json({ message: "Bad request. No messasge to delete" });
+    }
+
+    return res.status(201).json({ message: "Message deleted" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "server error" });
+  }
 };

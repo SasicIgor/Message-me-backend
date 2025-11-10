@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { verifyToken, type JWTPayload } from "../utils/jwt.ts";
-
+//setting up an user in request
 export interface AuthenticatedRequest extends Request {
   user?: JWTPayload;
 }
@@ -21,7 +21,7 @@ export const authMiddleware = async (
     const token = authHeaeder.split(" ")[1];
 
     if (!token) {
-      return res.status(401).json({message:"Access token required!"});
+      return res.status(401).json({ message: "Access token required!" });
     }
 
     const payload = await verifyToken(token);
