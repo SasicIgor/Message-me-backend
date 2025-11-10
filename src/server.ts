@@ -3,8 +3,8 @@ import cors from "cors";
 import morgan from "morgan";
 import helmet from "helmet";
 
-import authRoutes from "./routes/authRoutes.ts";
-import messageRouter from "./routes/messageRoutes.ts";
+import authRoutes from "./routes/auth.routes.ts";
+import messageRouter from "./routes/message.routes.ts";
 const app = express();
 
 //global middleware

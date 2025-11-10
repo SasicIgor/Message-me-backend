@@ -4,7 +4,7 @@ import {
   deleteMessage,
   editMessage,
   getMessages,
-} from "../controllers/messageController.ts";
+} from "../controllers/message.controller.ts";
 import { authMiddleware } from "../middleware/auth.ts";
 import { checkChatMembership } from "../middleware/checkChatMembership.ts";
 import { validateBody } from "../middleware/validation.ts";
