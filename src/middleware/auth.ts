@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
-import { verifyToken } from "../utils/jwt.ts";
-import { type JWTPayload } from "jose";
-interface AuthenticatedRequest extends Request {
+import { verifyToken, type JWTPayload } from "../utils/jwt.ts";
+
+export interface AuthenticatedRequest extends Request {
   user?: JWTPayload;
 }
 
@@ -25,6 +25,8 @@ export const authMiddleware = async (
     }
 
     const payload = await verifyToken(token);
+    if (!payload) return res.status(401).json({ message: "Invalid token" });
+
     req.user = payload;
     next();
   } catch (error) {

@@ -2,7 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { createSecretKey } from "crypto";
 import "dotenv/config";
 
-type JWTPayload = {
+export type JWTPayload = {
   id: string;
   username: string;
 };
@@ -24,7 +24,7 @@ export const generateToken = (payload: JWTPayload) => {
 
 export const verifyToken = async (token: string) => {
   const secret = tokenSecret();
-  const { payload } = await jwtVerify(token, secret);
+  const { payload } = await jwtVerify<JWTPayload>(token, secret);
   console.log(payload);
   return payload;
 };
