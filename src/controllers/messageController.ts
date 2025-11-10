@@ -7,10 +7,10 @@ import { getUserAndChat } from "../utils/getUserAndChat.ts";
 
 export const getMessages = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { chatId, userId } = getUserAndChat(req);
+    const { chatId } = getUserAndChat(req);
 
     const msgs = await db.query.message.findMany({
-      where: and(eq(message.chatId, chatId), eq(message.senderId, userId)),
+      where: and(eq(message.chatId, chatId)),
       orderBy: [desc(message.createdAt)],
     });
 
