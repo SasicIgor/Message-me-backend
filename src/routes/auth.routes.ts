@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { login, register } from "../controllers/auth.controller.ts";
-import { validateBody } from "../middleware/validation.ts";
+import { validateBody } from "../middleware/validation.middleware.ts";
 import {
   loginSchema,
   registrationSchema,
@@ -10,6 +10,6 @@ const router = Router();
 
 router
   .post("/register", validateBody(registrationSchema), register)
-  .post("/login",  login);
+  .post("/login", login);
 // validateBody(loginSchema),
 export default router;

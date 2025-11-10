@@ -1,5 +1,5 @@
 import type { NextFunction, Response } from "express";
-import { type AuthenticatedRequest } from "./auth.ts";
+import { type AuthenticatedRequest } from "./auth.middleware.ts";
 import { db } from "../db/neon/connection.ts";
 import { and, eq } from "drizzle-orm";
 import { chat_member } from "../db/neon/schema.ts";

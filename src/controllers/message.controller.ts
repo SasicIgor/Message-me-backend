@@ -1,6 +1,6 @@
 import type { Response } from "express";
 
-import { type AuthenticatedRequest } from "../middleware/auth.ts";
+import { type AuthenticatedRequest } from "../middleware/auth.middleware.ts";
 import { getUserAndChat } from "../utils/getUserAndChat.ts";
 import { messageService } from "../services/message.service.ts";
 
