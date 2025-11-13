@@ -5,14 +5,17 @@ import { generateToken } from "../utils/jwt.ts";
 import { comparePassword, hashPassword } from "../utils/password.ts";
 import { eq } from "drizzle-orm";
 import { UniqueConstraintError } from "../errors/unique-constarint.error.ts";
+import { userService } from "./user.service.ts";
+import { UnauthorizedError } from "../errors/unauthorized.error.ts";
+import { type AuthenticatedRequest } from "../middleware/auth.middleware.ts";
 
-export const register = async (
+export const registerUser = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { username, password, confirmedPassword } = req.body;
+    const { username, password, confirmedPassword, email } = req.body;
     const usernameExist = await db.query.user.findFirst({
       where: eq(user.username, username),
     });
@@ -24,48 +27,36 @@ export const register = async (
     }
     const hashedPassword = await hashPassword(password);
 
-    const [newUser] = await db
-      .insert(user)
-      .values({ ...req.body, password: hashedPassword })
-      .returning({
-        id: user.id,
-        username: user.username,
-      });
+    const newUser = await userService.registerUser({
+      username,
+      password: hashedPassword,
+      email,
+    });
 
     const token = await generateToken({
       id: newUser.id,
       username: newUser.username,
     });
 
-    return res
-      .status(201)
-      .json({ message: "New user created!", newUser, token });
+    res.status(201).json({ message: "New user created!", newUser, token });
   } catch (error) {
     next(error);
   }
 };
 
-export const login = async (
+export const loginUser = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { username, password } = req.body;
-    const [storedUser] = await db
-      .select()
-      .from(user)
-      .where(eq(user.username, username))
-      .limit(1);
-    if (!storedUser) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+    const storedUser = await userService.loginUser(username);
 
-    // const isPassCorrect = await comparePassword(password, storedUser.password);
-    // if (!isPassCorrect) {
-    //   console.log(isPassCorrect);
-    //   return res.status(401).json({ message: "Invalid credentials" });
-    // }
+    const isPassCorrect = await comparePassword(password, storedUser.password);
+    if (!isPassCorrect) {
+      throw new UnauthorizedError("Invalid credentials!");
+    }
 
     const token = await generateToken({ id: storedUser.id, username });
 
@@ -78,3 +69,7 @@ export const login = async (
     next(error);
   }
 };
+
+export const updateUser = async () => {};
+
+export const deleteUser = async () => {};
