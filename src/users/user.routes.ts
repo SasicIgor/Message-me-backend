@@ -10,6 +10,7 @@ import {
   loginSchema,
   registrationSchema,
 } from "../validations/user-validation.ts";
+import { authMiddleware } from "../middleware/auth.middleware.ts";
 
 const router = Router();
 
@@ -17,6 +18,6 @@ router
   .post("/user/register", validateBody(registrationSchema), registerUser)
   // validateBody(loginSchema),
   .post("/user/login", loginUser)
-  .put("/user", updateUser)
-  .delete("/user", deleteUser);
+  .patch("/user/update", authMiddleware, updateUser)
+  .delete("/user/delete", deleteUser);
 export default router;

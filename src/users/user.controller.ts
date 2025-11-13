@@ -70,6 +70,22 @@ export const loginUser = async (
   }
 };
 
-export const updateUser = async () => {};
+export const updateUser = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id: userId } = req.user!;
+    const newData = req.body;
+
+    const updatedUser = await userService.updateUser(userId, newData);
+    res
+      .status(200)
+      .json({ message: "User successfully updated!", data: updatedUser });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const deleteUser = async () => {};

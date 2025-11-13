@@ -1,7 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/neon/connection.ts";
 import { user, type User } from "../db/neon/schema.ts";
-import { BadRequestError } from "../errors/bad-request.error.ts";
 import { UnauthorizedError } from "../errors/unauthorized.error.ts";
 
 export const userService = {
@@ -33,4 +32,19 @@ export const userService = {
     }
   },
 
+  async updateUser(
+    userId: string,
+    data: Pick<User, "username" | "email">
+  ): Promise<Pick<User, "username" | "id">> {
+    try {
+      const [updatedUser] = await db
+        .update(user)
+        .set(data)
+        .where(eq(user.id, userId))
+        .returning({ username: user.username, id: user.id });
+      return updatedUser;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
