@@ -20,7 +20,7 @@ export const registerUser = async (
       where: eq(user.username, username),
     });
     if (usernameExist) {
-      throw new UniqueConstraintError("Username already in a database!");
+      throw new UniqueConstraintError("Username already exist!");
     }
     if (password !== confirmedPassword) {
       res.status(401).json("Password must be the same as confirmed password");
@@ -88,4 +88,17 @@ export const updateUser = async (
   }
 };
 
-export const deleteUser = async () => {};
+export const deleteUser = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id: userId } = req.user!;
+    console.log(userId);
+    await userService.deleteUser(userId);
+    res.status(204).json({ message: "User deleted successfully!" });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -42,7 +42,23 @@ export const userService = {
         .set(data)
         .where(eq(user.id, userId))
         .returning({ username: user.username, id: user.id });
+      if (!updatedUser)
+        throw new UnauthorizedError("No user edited. Unauthorized access!");
       return updatedUser;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  async deleteUser(id: string) {
+    try {
+      const [deletedUser] = await db
+        .delete(user)
+        .where(eq(user.id, id))
+        .returning();
+      if (!deletedUser)
+        throw new UnauthorizedError("No user deleted. Unauthorized access!");
+      return deletedUser;
     } catch (error) {
       throw error;
     }

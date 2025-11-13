@@ -19,5 +19,5 @@ router
   // validateBody(loginSchema),
   .post("/user/login", loginUser)
   .patch("/user/update", authMiddleware, updateUser)
-  .delete("/user/delete", deleteUser);
+  .delete("/user/delete", authMiddleware, deleteUser);
 export default router;
