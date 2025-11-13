@@ -3,8 +3,8 @@ import cors from "cors";
 import morgan from "morgan";
 import helmet from "helmet";
 
-import authRoutes from "./routes/auth.routes.ts";
-import messageRouter from "./routes/message.routes.ts";
+import authRoutes from "./auth/auth.routes.ts";
+import messageRouter from "./messages/message.routes.ts";
 import { errorMiddleware } from "./middleware/error.middleware.ts";
 const app = express();
 

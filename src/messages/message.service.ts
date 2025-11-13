@@ -1,10 +1,10 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/neon/connection.ts";
-import { message } from "../db/neon/schema.ts";
+import { type Message, message } from "../db/neon/schema.ts";
 import { BadRequestError } from "../errors/bad-request.error.ts";
 
 export const messageService = {
-  async getMessages(chatId: string) {
+  async getMessages(chatId: string): Promise<Message[]> {
     try {
       return await db.query.message.findMany({
         where: and(eq(message.chatId, chatId)),
@@ -15,12 +15,17 @@ export const messageService = {
     }
   },
 
-  async createMessage(chatId: string, senderId: string, content: string) {
+  async createMessage(
+    chatId: string,
+    senderId: string,
+    content: string
+  ): Promise<Message> {
     try {
-      return await db
+      const [msg] = await db
         .insert(message)
         .values({ content, chatId, senderId })
         .returning();
+      return msg;
     } catch (error) {
       throw error;
     }
@@ -31,9 +36,9 @@ export const messageService = {
     senderId: string,
     messageId: string,
     content: string
-  ) {
+  ): Promise<Message> {
     try {
-      const result = await db
+      const [result] = await db
         .update(message)
         .set({ content })
         .where(
@@ -44,16 +49,20 @@ export const messageService = {
           )
         )
         .returning();
-      if (!result.length) throw new BadRequestError("No message to edit");
+      if (!result) throw new BadRequestError("No message to edit");
       return result;
     } catch (error) {
       throw error;
     }
   },
 
-  async deleteMessage(chatId: string, senderId: string, messageId: string) {
+  async deleteMessage(
+    chatId: string,
+    senderId: string,
+    messageId: string
+  ): Promise<Message> {
     try {
-      const result = await db
+      const [result] = await db
         .delete(message)
         .where(
           and(
@@ -63,7 +72,7 @@ export const messageService = {
           )
         )
         .returning();
-      if (!result.length) throw new BadRequestError("No message to delete");
+      if (!result) throw new BadRequestError("No message to delete");
       return result;
     } catch (error) {
       throw error;

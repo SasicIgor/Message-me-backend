@@ -2,8 +2,9 @@ import type { NextFunction, Response } from "express";
 
 import { type AuthenticatedRequest } from "../middleware/auth.middleware.ts";
 import { getUserAndChat } from "../utils/getUserAndChat.ts";
-import { messageService } from "../services/message.service.ts";
+import { messageService } from "./message.service.ts";
 import { BadRequestError } from "../errors/bad-request.error.ts";
+import { type Message } from "../db/neon/schema.ts";
 
 export const getMessages = async (
   req: AuthenticatedRequest,
@@ -12,8 +13,8 @@ export const getMessages = async (
 ) => {
   try {
     const { chatId } = getUserAndChat(req);
-    const msgs = await messageService.getMessages(chatId);
-    return res.status(200).json({ message: "All good baby.", msgs });
+    const msgs: Required<Message[]> = await messageService.getMessages(chatId);
+    res.status(200).json({ message: "All good baby.", msgs });
   } catch (error) {
     next(error);
   }
@@ -27,8 +28,12 @@ export const createMessage = async (
   try {
     const { chatId, userId } = getUserAndChat(req);
     const { content } = req.body;
-    const msg = await messageService.createMessage(chatId, userId, content);
-    return res.status(201).json({ message: "Message created", msg });
+    const msg = (await messageService.createMessage(
+      chatId,
+      userId,
+      content
+    )) as Required<Message>;
+    res.status(201).json({ message: "Message created", msg });
   } catch (error) {
     next(error);
   }
@@ -46,13 +51,13 @@ export const editMessage = async (
       throw new BadRequestError("Message Id is missing!");
     }
 
-    const msg = await messageService.editMessage(
+    const msg= (await messageService.editMessage(
       chatId,
       userId,
       messageId,
       content
-    );
-    return res.status(200).json({ message: "Message updated", msg });
+    )) as Required<Message>;
+    res.status(200).json({ message: "Message updated", msg });
   } catch (error) {
     next(error);
   }
@@ -67,8 +72,8 @@ export const deleteMessage = async (
     if (!messageId) {
       throw new BadRequestError("Message Id is missing!");
     }
-    const msg = await messageService.deleteMessage(chatId, userId, messageId);
-    return res.status(200).json({ message: "Message deleted", msg });
+    await messageService.deleteMessage(chatId, userId, messageId);
+    res.status(204).json({ message: "Message deleted" });
   } catch (error) {
     next(error);
   }
