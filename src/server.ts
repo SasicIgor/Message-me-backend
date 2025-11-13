@@ -5,6 +5,7 @@ import helmet from "helmet";
 
 import authRoutes from "./routes/auth.routes.ts";
 import messageRouter from "./routes/message.routes.ts";
+import { errorMiddleware } from "./middleware/error.middleware.ts";
 const app = express();
 
 //global middleware
@@ -18,4 +19,6 @@ app.use(morgan("dev"));
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/chat", messageRouter);
 
+//error handler
+app.use(errorMiddleware)
 export default app;

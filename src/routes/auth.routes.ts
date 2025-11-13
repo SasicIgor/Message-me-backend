@@ -4,7 +4,7 @@ import { validateBody } from "../middleware/validation.middleware.ts";
 import {
   loginSchema,
   registrationSchema,
-} from "../validations/userValidation.ts";
+} from "../validations/user-validation.ts";
 
 const router = Router();
 

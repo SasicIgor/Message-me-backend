@@ -10,33 +10,35 @@ import { checkChatMembership } from "../middleware/checkChatMembership.middlewar
 import { validateBody } from "../middleware/validation.middleware.ts";
 import {
   createMsgSchema,
-  deleteMsgSchema,
   editMsgSchema,
-} from "../validations/messageValidation.ts";
+} from "../validations/message-validation.ts";
 
 const router = Router();
-const route = "/messages/:chatId";
 
-router.get(route, authMiddleware, checkChatMembership, getMessages);
+router.get(
+  "/messages/:chatId",
+  authMiddleware,
+  checkChatMembership,
+  getMessages
+);
 router.post(
-  route,
+  "/messages/:chatId",
   authMiddleware,
   checkChatMembership,
   validateBody(createMsgSchema),
   createMessage
 );
 router.patch(
-  route,
+  "/messages/:chatId/:messageId",
   authMiddleware,
   checkChatMembership,
   validateBody(editMsgSchema),
   editMessage
 );
 router.delete(
-  route,
+  "/messages/:chatId/:messageId",
   authMiddleware,
   checkChatMembership,
-  validateBody(deleteMsgSchema),
   deleteMessage
 );
 

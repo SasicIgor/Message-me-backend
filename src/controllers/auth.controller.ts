@@ -1,13 +1,24 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { db } from "../db/neon/connection.ts";
 import { user } from "../db/neon/schema.ts";
 import { generateToken } from "../utils/jwt.ts";
 import { comparePassword, hashPassword } from "../utils/password.ts";
 import { eq } from "drizzle-orm";
+import { UniqueConstraintError } from "../errors/unique-constarint.error.ts";
 
-export const register = async (req: Request, res: Response) => {
+export const register = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const { password, confirmedPassword } = req.body;
+    const { username, password, confirmedPassword } = req.body;
+    const usernameExist = await db.query.user.findFirst({
+      where: eq(user.username, username),
+    });
+    if (usernameExist) {
+      throw new UniqueConstraintError("Username already in a database!");
+    }
     if (password !== confirmedPassword) {
       res.status(401).json("Password must be the same as confirmed password");
     }
@@ -30,11 +41,15 @@ export const register = async (req: Request, res: Response) => {
       .status(201)
       .json({ message: "New user created!", newUser, token });
   } catch (error) {
-    res.status(500).json("Failed to create user");
+    next(error);
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { username, password } = req.body;
     const [storedUser] = await db
@@ -60,6 +75,6 @@ export const login = async (req: Request, res: Response) => {
       user: { username, id: storedUser.id },
     });
   } catch (error) {
-    res.status(500).json("Failed to log in user");
+    next(error);
   }
 };

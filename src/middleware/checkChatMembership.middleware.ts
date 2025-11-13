@@ -3,6 +3,9 @@ import { type AuthenticatedRequest } from "./auth.middleware.ts";
 import { db } from "../db/neon/connection.ts";
 import { and, eq } from "drizzle-orm";
 import { chat_member } from "../db/neon/schema.ts";
+import { BadRequestError } from "../errors/bad-request.error.ts";
+import { UnauthorizedError } from "../errors/unauthorized.error.ts";
+import { ServerError } from "../errors/server.error.ts";
 
 const isMember = async (userId: string, chatId: string): Promise<boolean> => {
   const member = await db.query.chat_member.findFirst({
@@ -20,16 +23,15 @@ export const checkChatMembership = async (
     const userId = req.user!.id;
     const { chatId } = req.params;
     if (!chatId) {
-      return res.status(400).json({ message: "Bad request" });
+      return next(new BadRequestError("ChatId required!"));
     }
 
     const checkMember = await isMember(userId, chatId);
     if (!checkMember) {
-      return res.status(403).json({ message: "Forbidden access!" });
+      return next(new UnauthorizedError("You are not a chat member!"));
     }
     next();
   } catch (error) {
-    console.log(error);
-    return next(error);
+    return next(new ServerError("Server error!"));
   }
 };

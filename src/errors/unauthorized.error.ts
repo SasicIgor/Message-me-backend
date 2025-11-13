@@ -1,4 +1,4 @@
-import { HttpError } from "./http.error";
+import { HttpError } from "./http.error.ts";
 
 export class UnauthorizedError extends HttpError {
   constructor(message: string) {

@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { verifyToken, type JWTPayload } from "../utils/jwt.ts";
+import { UnauthorizedError } from "../errors/unauthorized.error.ts";
 //setting up an user in request
 export interface AuthenticatedRequest extends Request {
   user?: JWTPayload;
@@ -15,21 +16,21 @@ export const authMiddleware = async (
       (req.headers["Authorization"] as string) ||
       (req.headers["authorization"] as string);
     if (!authHeaeder) {
-      return next("Forbidden access!");
+      return next(new UnauthorizedError("Unauthorised request!"));
     }
 
     const token = authHeaeder.split(" ")[1];
 
     if (!token) {
-      return res.status(401).json({ message: "Access token required!" });
+      return next(new UnauthorizedError("Token required!"));
     }
 
     const payload = await verifyToken(token);
-    if (!payload) return res.status(401).json({ message: "Invalid token" });
+    if (!payload) return next(new UnauthorizedError("Invalid token!"));
 
     req.user = payload;
     next();
   } catch (error) {
-    res.status(403).json({ message: "Invalid or expired token" });
+    return next(new UnauthorizedError("Invalid token!"));
   }
 };

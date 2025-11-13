@@ -1,5 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { ZodError, ZodType } from "zod";
+import { BadRequestError } from "../errors/bad-request.error.ts";
+import { ServerError } from "../errors/server.error.ts";
 
 export const validateBody = (schema: ZodType) => {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -8,15 +10,9 @@ export const validateBody = (schema: ZodType) => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({
-          error: "Validation failed",
-          details: error.issues.map((err) => ({
-            field: err.path.join("."),
-            message: err.message,
-          })),
-        });
+        return next(new BadRequestError(error.message));
       }
-      next(error);
+      next(new ServerError("Server error!"));
     }
   };
 };
