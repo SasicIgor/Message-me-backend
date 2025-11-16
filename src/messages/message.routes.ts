@@ -16,27 +16,27 @@ import {
 const router = Router();
 
 router.get(
-  "/messages/:chatId",
+  "/:chatId",
   authMiddleware,
   checkChatMembership,
   getMessages
 );
 router.post(
-  "/messages/:chatId",
+  "/:chatId",
   authMiddleware,
   checkChatMembership,
   validateBody(createMsgSchema),
   createMessage
 );
 router.patch(
-  "/messages/:chatId/:messageId",
+  "/:chatId/:messageId",
   authMiddleware,
   checkChatMembership,
   validateBody(editMsgSchema),
   editMessage
 );
 router.delete(
-  "/messages/:chatId/:messageId",
+  "/:chatId/:messageId",
   authMiddleware,
   checkChatMembership,
   deleteMessage

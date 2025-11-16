@@ -5,6 +5,8 @@ import helmet from "helmet";
 
 import authRoutes from "./users/user.routes.ts";
 import messageRouter from "./messages/message.routes.ts";
+import chatRouter from "./chats/chat.routes.ts";
+
 import { errorMiddleware } from "./middleware/error.middleware.ts";
 const app = express();
 
@@ -17,8 +19,9 @@ app.use(morgan("dev"));
 
 //routes
 app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/chat", messageRouter);
+app.use("/api/v1/messages", messageRouter);
+app.use("/api/v1/chats", chatRouter);
 
 //error handler
-app.use(errorMiddleware)
+app.use(errorMiddleware);
 export default app;

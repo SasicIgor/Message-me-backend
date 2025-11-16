@@ -26,6 +26,10 @@ const seed = async () => {
       email: faker.internet.email(),
       password: faker.internet.password(),
     }));
+
+    userData.forEach((user) => {
+      console.log("Username: ", user.username, "  Password: ", user.password);
+    });
     console.log("Inserting 10 users...");
     const insertedUsers = await db
       .insert(user)
