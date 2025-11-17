@@ -26,7 +26,7 @@ export const user = pgTable(
 
 export const chat = pgTable("chat", {
   id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar("name", { length: 50 }),
+  name: varchar("name", { length: 50 }).default("New Group"),
   isGroup: boolean("is_group").default(false).notNull(),
 });
 

@@ -10,3 +10,8 @@ export type ChatBasicInfo = {
 export type SingleChatBasic = Required<
   Pick<ChatBasicInfo, "chatId" | "memberId" | "memberUsername">
 >;
+
+//creating group chat
+export type GroupChatBasicInfo = Required<
+  Pick<ChatBasicInfo, "chatId" | "name" | "isGroup">
+>;

@@ -1,7 +1,11 @@
 import { and, DrizzleQueryError, eq, inArray, ne, sql } from "drizzle-orm";
 import { db } from "../db/neon/connection.ts";
 import { chat, chat_member, user } from "../db/neon/schema.ts";
-import type { SingleChatBasic, ChatBasicInfo } from "./chat.types.ts";
+import type {
+  SingleChatBasic,
+  ChatBasicInfo,
+  GroupChatBasicInfo,
+} from "./chat.types.ts";
 import { DatabaseError } from "../errors/database.error.ts";
 import { BadRequestError } from "../errors/bad-request.error.ts";
 
@@ -47,20 +51,16 @@ const chatService = {
     userId: string,
     memberId: string
   ): Promise<SingleChatBasic> {
-    //user is one who requests, memeber is other party of the 1v1 chat
+    //user is one who made request, memeber is other party of the 1v1 chat
     try {
-      //check if the 2 different ids are provided
-      if (userId === memberId) {
-        throw new BadRequestError("You cannot make chat with yourself!");
-      }
-      const membersId = [userId, memberId];
-
-      //find a member from the chat and trhow error if it doesn't exist
+      //find a member from the chat and throw error if it doesn't exist
       const [otherMember] = await db
         .select({ memberId: user.id, memberUsername: user.username })
         .from(user)
         .where(eq(user.id, memberId));
       if (!otherMember) throw new BadRequestError("Other user doesn't exist.");
+
+      const membersId = [userId, memberId];
 
       //find the chat if it exist and return if you find it
       const [existingChat] = await db
@@ -99,8 +99,59 @@ const chatService = {
       throw error;
     }
   },
-  async createChat() {},
-  async updateChat() {},
+  async createGroupChat(
+    memberIds: string[],
+    name: string
+  ): Promise<GroupChatBasicInfo> {
+    try {
+      const newGroupChat = await db.transaction(async (tx) => {
+        const allUsersExist = await tx
+          .select({ id: user.id })
+          .from(user)
+          .where(inArray(user.id, memberIds));
+        console.log("ALL USERS: ", allUsersExist);
+
+        if (allUsersExist.length !== memberIds.length) {
+          throw new BadRequestError("All users must exist!");
+        }
+
+        const [newChat] = await tx
+          .insert(chat)
+          .values({ name, isGroup: true })
+          .returning({
+            chatId: chat.id,
+            name: chat.name,
+            isGroup: chat.isGroup,
+          });
+        console.log("NEW CHAT: ", newChat);
+        if (!newChat) throw new DatabaseError("Failed to insert new chat");
+
+        const chat_members = await tx
+          .insert(chat_member)
+          .values(
+            memberIds.map((memberId) => {
+              return { userId: memberId, chatId: newChat.chatId };
+            })
+          )
+          .returning({ userId: chat_member.userId });
+
+        console.log("CHAT MEMBERS: ", chat_members);
+
+        if (chat_members.length !== memberIds.length)
+          throw new DatabaseError(
+            "Failed to insert all users to chat_members!"
+          );
+        return newChat;
+      });
+      console.log("NEW GROUP CHAT: ", newGroupChat);
+      return newGroupChat;
+    } catch (error) {
+      if (error instanceof DrizzleQueryError) {
+        throw new DatabaseError("Failed to query db!");
+      }
+      throw error;
+    }
+  },
   async deleteChat() {},
 };
 
