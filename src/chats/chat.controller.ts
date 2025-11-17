@@ -27,12 +27,16 @@ export const getOneChat = async (
   }
 };
 
-export const createChat = async (
+export const getOrCreatePrivateChat = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
+    const { id: userId } = req.user!;
+    const { memberId } = req.body;
+    const result = await chatService.findOrCreatePrivateChat(userId, memberId);
+    res.status(200).json({ message: "Success", result });
   } catch (error) {
     next(error);
   }

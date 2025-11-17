@@ -27,7 +27,7 @@ export const user = pgTable(
 export const chat = pgTable("chat", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 50 }),
-  isGroup: boolean("is_group").notNull(),
+  isGroup: boolean("is_group").default(false).notNull(),
 });
 
 export const chat_member = pgTable(
@@ -40,7 +40,10 @@ export const chat_member = pgTable(
       .references(() => chat.id)
       .notNull(),
   },
-  (t) => [primaryKey({ columns: [t.userId, t.chatId] })]
+  (t) => [
+    primaryKey({ columns: [t.userId, t.chatId] }),
+    index("chat_member_chat_id_idx").on(t.chatId),
+  ]
 );
 
 export const message = pgTable(

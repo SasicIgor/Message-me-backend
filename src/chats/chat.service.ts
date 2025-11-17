@@ -1,11 +1,12 @@
-import { DrizzleQueryError, eq } from "drizzle-orm";
+import { and, DrizzleQueryError, eq, inArray, ne, sql } from "drizzle-orm";
 import { db } from "../db/neon/connection.ts";
-import { chat_member } from "../db/neon/schema.ts";
-import { type ChatInfo } from "./chat.types.ts";
+import { chat, chat_member, user } from "../db/neon/schema.ts";
+import type { SingleChatBasic, ChatBasicInfo } from "./chat.types.ts";
 import { DatabaseError } from "../errors/database.error.ts";
+import { BadRequestError } from "../errors/bad-request.error.ts";
 
 const chatService = {
-  async getAllChats(userId: string): Promise<ChatInfo[]> {
+  async getAllChats(userId: string): Promise<ChatBasicInfo[]> {
     try {
       const chats = await db.query.chat_member.findMany({
         where: eq(chat_member.userId, userId),
@@ -32,6 +33,7 @@ const chatService = {
           name: data.chat.name,
           isGroup: data.chat.isGroup,
           memberUsername: otherUser.user.username,
+          memberId: otherUser.user.id,
         };
       });
       return formatedData;
@@ -41,7 +43,62 @@ const chatService = {
       throw error;
     }
   },
+  async findOrCreatePrivateChat(
+    userId: string,
+    memberId: string
+  ): Promise<SingleChatBasic> {
+    //user is one who requests, memeber is other party of the 1v1 chat
+    try {
+      //check if the 2 different ids are provided
+      if (userId === memberId) {
+        throw new BadRequestError("You cannot make chat with yourself!");
+      }
+      const membersId = [userId, memberId];
 
+      //find a member from the chat and trhow error if it doesn't exist
+      const [otherMember] = await db
+        .select({ memberId: user.id, memberUsername: user.username })
+        .from(user)
+        .where(eq(user.id, memberId));
+      if (!otherMember) throw new BadRequestError("Other user doesn't exist.");
+
+      //find the chat if it exist and return if you find it
+      const [existingChat] = await db
+        .select({ chatId: chat_member.chatId })
+        .from(chat_member)
+        .innerJoin(chat, eq(chat.id, chat_member.chatId))
+        .where(
+          and(eq(chat.isGroup, false), inArray(chat_member.userId, membersId))
+        )
+        .groupBy(chat_member.chatId)
+        .having(sql`COUNT(*)=2`);
+      if (existingChat) {
+        return { ...otherMember, chatId: existingChat.chatId };
+      }
+
+      //create a new chat if there is no existing one\
+      //transaction to encapsulte do logic for inserting in 2 tables
+      const createdChat = await db.transaction(async (tx) => {
+        const [newChat] = await tx
+          .insert(chat)
+          .values({ isGroup: false, name: null })
+          .returning({ chatId: chat.id });
+
+        await tx.insert(chat_member).values([
+          { userId: membersId[0], chatId: newChat.chatId },
+          { userId: membersId[1], chatId: newChat.chatId },
+        ]);
+        const data = { ...otherMember, ...newChat };
+        return data;
+      });
+
+      return createdChat;
+    } catch (error) {
+      if (error instanceof DrizzleQueryError)
+        throw new DatabaseError("Failed to query db!");
+      throw error;
+    }
+  },
   async createChat() {},
   async updateChat() {},
   async deleteChat() {},

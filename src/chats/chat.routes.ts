@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {
-  createChat,
+  getOrCreatePrivateChat,
   deleteChat,
   getOneChat,
   getUserChats,
@@ -11,7 +11,7 @@ import { authMiddleware } from "../middleware/auth.middleware.ts";
 const router = Router();
 
 router.get("/", authMiddleware, getUserChats);
-router.post("/", authMiddleware, createChat);
+router.post("/private", authMiddleware, getOrCreatePrivateChat);
 router.get("/:chatId", authMiddleware, getOneChat);
 router.patch("/:chatId", authMiddleware, updateChat);
 router.delete("/:chatId", authMiddleware, deleteChat);
