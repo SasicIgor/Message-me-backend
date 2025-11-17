@@ -37,7 +37,7 @@ export const chat_member = pgTable(
       .references(() => user.id)
       .notNull(),
     chatId: uuid("chat_id")
-      .references(() => chat.id)
+      .references(() => chat.id, { onDelete: "cascade" })
       .notNull(),
   },
   (t) => [
@@ -51,7 +51,7 @@ export const message = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     chatId: uuid("chat_id")
-      .references(() => chat.id)
+      .references(() => chat.id, { onDelete: "cascade" })
       .notNull(),
     senderId: uuid("user_id")
       .references(() => user.id)

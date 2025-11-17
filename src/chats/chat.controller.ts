@@ -77,6 +77,10 @@ export const deleteChat = async (
   next: NextFunction
 ) => {
   try {
+    const { id: userId } = req.user!;
+    const { chatId } = req.params;
+    const result = await chatService.deleteChatForUser(userId, chatId);
+    res.status(204).json(result);
   } catch (error) {
     next(error);
   }

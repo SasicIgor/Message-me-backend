@@ -8,6 +8,7 @@ import type {
 } from "./chat.types.ts";
 import { DatabaseError } from "../errors/database.error.ts";
 import { BadRequestError } from "../errors/bad-request.error.ts";
+import { UnauthorizedError } from "../errors/unauthorized.error.ts";
 
 const chatService = {
   async getAllChats(userId: string): Promise<ChatBasicInfo[]> {
@@ -109,7 +110,6 @@ const chatService = {
           .select({ id: user.id })
           .from(user)
           .where(inArray(user.id, memberIds));
-        console.log("ALL USERS: ", allUsersExist);
 
         if (allUsersExist.length !== memberIds.length) {
           throw new BadRequestError("All users must exist!");
@@ -123,7 +123,6 @@ const chatService = {
             name: chat.name,
             isGroup: chat.isGroup,
           });
-        console.log("NEW CHAT: ", newChat);
         if (!newChat) throw new DatabaseError("Failed to insert new chat");
 
         const chat_members = await tx
@@ -135,15 +134,12 @@ const chatService = {
           )
           .returning({ userId: chat_member.userId });
 
-        console.log("CHAT MEMBERS: ", chat_members);
-
         if (chat_members.length !== memberIds.length)
           throw new DatabaseError(
             "Failed to insert all users to chat_members!"
           );
         return newChat;
       });
-      console.log("NEW GROUP CHAT: ", newGroupChat);
       return newGroupChat;
     } catch (error) {
       if (error instanceof DrizzleQueryError) {
@@ -152,7 +148,39 @@ const chatService = {
       throw error;
     }
   },
-  async deleteChat() {},
+  async deleteChatForUser(userId: string, chatId: string) {
+    try {
+      const deleteChat = await db.transaction(async (tx) => {
+        const isUserChatMember = await tx.query.chat_member.findFirst({
+          where: and(
+            eq(chat_member.chatId, chatId),
+            eq(chat_member.userId, userId)
+          ),
+          with: { chat: true },
+        });
+        if (!isUserChatMember)
+          throw new UnauthorizedError("Unauthorized access denied!");
+
+        if (isUserChatMember.chat.isGroup) {
+          await tx
+            .delete(chat_member)
+            .where(
+              and(
+                eq(chat_member.chatId, chatId),
+                eq(chat_member.userId, userId)
+              )
+            );
+          return;
+        }
+        await tx.delete(chat).where(eq(chat.id, chatId));
+        return { message: "Chat deleted" };
+      });
+      return deleteChat;
+    } catch (error) {
+      console.log("ERROR: ", error);
+      throw new DatabaseError("Unable to delete from db!");
+    }
+  },
 };
 
 export default chatService;
