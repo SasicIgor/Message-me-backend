@@ -1,4 +1,12 @@
-import { and, DrizzleQueryError, eq, inArray, ne, sql } from "drizzle-orm";
+import {
+  and,
+  ConsoleLogWriter,
+  DrizzleQueryError,
+  eq,
+  inArray,
+  ne,
+  sql,
+} from "drizzle-orm";
 import { db } from "../db/neon/connection.ts";
 import { chat, chat_member, user } from "../db/neon/schema.ts";
 import type {
@@ -21,7 +29,7 @@ const chatService = {
       const formatedData = chats.map((data) => {
         if (data.chat.isGroup) {
           return {
-            chatId: data.chatId,
+            id: data.chatId,
             name: data.chat.name,
             isGroup: data.chat.isGroup,
           };
@@ -34,7 +42,7 @@ const chatService = {
             "No other user found for a chat. Invalid key"
           );
         return {
-          chatId: data.chatId,
+          id: data.chatId,
           name: data.chat.name,
           isGroup: data.chat.isGroup,
           memberUsername: otherUser.user.username,
@@ -43,8 +51,7 @@ const chatService = {
       });
       return formatedData;
     } catch (error) {
-      if (error instanceof DrizzleQueryError) throw error;
-      throw new DatabaseError("Failed to query db!");
+      throw error;
     }
   },
   async findOrCreatePrivateChat(
@@ -73,7 +80,7 @@ const chatService = {
         .groupBy(chat_member.chatId)
         .having(sql`COUNT(*)=2`);
       if (existingChat) {
-        return { ...otherMember, chatId: existingChat.chatId };
+        return { ...otherMember, id: existingChat.chatId };
       }
 
       //create a new chat if there is no existing one\
@@ -82,11 +89,11 @@ const chatService = {
         const [newChat] = await tx
           .insert(chat)
           .values({ isGroup: false, name: null })
-          .returning({ chatId: chat.id });
+          .returning({ id: chat.id });
 
         await tx.insert(chat_member).values([
-          { userId: membersId[0], chatId: newChat.chatId },
-          { userId: membersId[1], chatId: newChat.chatId },
+          { userId: membersId[0], chatId: newChat.id },
+          { userId: membersId[1], chatId: newChat.id },
         ]);
         const data = { ...otherMember, ...newChat };
         return data;
@@ -94,8 +101,7 @@ const chatService = {
 
       return createdChat;
     } catch (error) {
-      if (error instanceof DrizzleQueryError) throw error;
-      throw new DatabaseError("Failed to query db!");
+      throw error;
     }
   },
   async createGroupChat(
@@ -117,7 +123,7 @@ const chatService = {
           .insert(chat)
           .values({ name, isGroup: true })
           .returning({
-            chatId: chat.id,
+            id: chat.id,
             name: chat.name,
             isGroup: chat.isGroup,
           });
@@ -127,7 +133,7 @@ const chatService = {
           .insert(chat_member)
           .values(
             memberIds.map((memberId) => {
-              return { userId: memberId, chatId: newChat.chatId };
+              return { userId: memberId, chatId: newChat.id };
             })
           )
           .returning({ userId: chat_member.userId });
@@ -140,10 +146,7 @@ const chatService = {
       });
       return newGroupChat;
     } catch (error) {
-      if (error instanceof DrizzleQueryError) {
-        throw error;
-      }
-      throw new DatabaseError("Failed to query db!");
+      throw error;
     }
   },
   async deleteChatForUser(userId: string, chatId: string) {
@@ -156,7 +159,6 @@ const chatService = {
           ),
           with: { chat: true },
         });
-        console.log("IS USER IN CHAT: ", isUserChatMember);
         if (!isUserChatMember)
           throw new UnauthorizedError("Unauthorized access denied!");
 
@@ -176,10 +178,40 @@ const chatService = {
       });
       return deletedChat;
     } catch (error) {
-      if (error instanceof DrizzleQueryError) {
-        throw error;
-      }
-      throw new DatabaseError("Unable to query database!");
+      throw error;
+    }
+  },
+  async updateChatName(
+    userId: string,
+    chatId: string,
+    name: string
+  ): Promise<ChatBasicInfo> {
+    try {
+      const result = await db.transaction(async (tx) => {
+        const existingChat = await tx.query.chat.findFirst({
+          where: eq(chat.id, chatId),
+          with: { chatMembers: true },
+        });
+
+        if (!existingChat) throw new BadRequestError("Invalid chat Id");
+        const isUserMember = existingChat.chatMembers.find(
+          (member) => member.userId === userId
+        );
+
+        if (!isUserMember)
+          throw new UnauthorizedError(
+            "Unautorized access, you are not a chat member!"
+          );
+        const [updatedChat] = await tx
+          .update(chat)
+          .set({ name })
+          .where(eq(chat.id, chatId))
+          .returning({ id: chat.id, isGroup: chat.isGroup, name: chat.name });
+        return updatedChat;
+      });
+      return result;
+    } catch (error) {
+      throw error;
     }
   },
 };

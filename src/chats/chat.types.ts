@@ -1,6 +1,6 @@
 //returned type from  querying all chats
 export type ChatBasicInfo = {
-  chatId: string;
+  id: string;
   name: string | null;
   isGroup: boolean;
   memberUsername?: string;
@@ -8,10 +8,10 @@ export type ChatBasicInfo = {
 };
 
 export type SingleChatBasic = Required<
-  Pick<ChatBasicInfo, "chatId" | "memberId" | "memberUsername">
+  Pick<ChatBasicInfo, "id" | "memberId" | "memberUsername">
 >;
 
 //creating group chat
 export type GroupChatBasicInfo = Required<
-  Pick<ChatBasicInfo, "chatId" | "name" | "isGroup">
+  Pick<ChatBasicInfo, "id" | "name" | "isGroup">
 >;

@@ -60,7 +60,23 @@ export const createGroupChat = async (
   }
 };
 
-export const updateChat = async (
+export const updateChatName = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id: userId } = req.user!;
+    const { chatId } = req.params;
+    const { name } = req.body;
+    const result = await chatService.updateChatName(userId, chatId, name);
+    res.status(201).json({ message: "Name updated successfully!", result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateChatMember = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
