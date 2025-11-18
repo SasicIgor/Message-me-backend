@@ -43,9 +43,8 @@ const chatService = {
       });
       return formatedData;
     } catch (error) {
-      if (error instanceof DrizzleQueryError)
-        throw new DatabaseError("Failed to query db!");
-      throw error;
+      if (error instanceof DrizzleQueryError) throw error;
+      throw new DatabaseError("Failed to query db!");
     }
   },
   async findOrCreatePrivateChat(
@@ -95,9 +94,8 @@ const chatService = {
 
       return createdChat;
     } catch (error) {
-      if (error instanceof DrizzleQueryError)
-        throw new DatabaseError("Failed to query db!");
-      throw error;
+      if (error instanceof DrizzleQueryError) throw error;
+      throw new DatabaseError("Failed to query db!");
     }
   },
   async createGroupChat(
@@ -143,14 +141,14 @@ const chatService = {
       return newGroupChat;
     } catch (error) {
       if (error instanceof DrizzleQueryError) {
-        throw new DatabaseError("Failed to query db!");
+        throw error;
       }
-      throw error;
+      throw new DatabaseError("Failed to query db!");
     }
   },
   async deleteChatForUser(userId: string, chatId: string) {
     try {
-      const deleteChat = await db.transaction(async (tx) => {
+      const deletedChat = await db.transaction(async (tx) => {
         const isUserChatMember = await tx.query.chat_member.findFirst({
           where: and(
             eq(chat_member.chatId, chatId),
@@ -158,6 +156,7 @@ const chatService = {
           ),
           with: { chat: true },
         });
+        console.log("IS USER IN CHAT: ", isUserChatMember);
         if (!isUserChatMember)
           throw new UnauthorizedError("Unauthorized access denied!");
 
@@ -175,10 +174,12 @@ const chatService = {
         await tx.delete(chat).where(eq(chat.id, chatId));
         return { message: "Chat deleted" };
       });
-      return deleteChat;
+      return deletedChat;
     } catch (error) {
-      console.log("ERROR: ", error);
-      throw new DatabaseError("Unable to delete from db!");
+      if (error instanceof DrizzleQueryError) {
+        throw error;
+      }
+      throw new DatabaseError("Unable to query database!");
     }
   },
 };
