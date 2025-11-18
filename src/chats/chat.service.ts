@@ -180,20 +180,6 @@ const chatService = {
   ): Promise<ChatBasicInfo> {
     try {
       const result = await db.transaction(async (tx) => {
-        const existingChat = await tx.query.chat.findFirst({
-          where: eq(chat.id, chatId),
-          with: { chatMembers: true },
-        });
-        if (!existingChat) throw new BadRequestError("Invalid chat Id");
-
-        const isUserMember = existingChat.chatMembers.find(
-          (member) => member.userId === userId
-        );
-
-        if (!isUserMember)
-          throw new UnauthorizedError(
-            "Unautorized access, you are not a chat member!"
-          );
         const [updatedChat] = await tx
           .update(chat)
           .set({ name })
@@ -217,29 +203,22 @@ const chatService = {
     //3. user removing himself
     try {
       const result = await db.transaction(async (tx) => {
+        //check if member exist in user table
         const memberExist = await tx.query.user.findFirst({
           where: eq(user.id, memberId),
         });
         if (!memberExist)
           throw new BadRequestError("You cannot add/remove non existent user!");
+        //check if user and member are the same for a message later
         const userAndMemberAreSame = userId === memberId;
+        //in middleware we know that chat exists
+        //now we check if its a group chat to allow the update of members
         const existingChat = await tx.query.chat.findFirst({
           where: and(eq(chat.id, chatId), eq(chat.isGroup, true)),
           with: { chatMembers: true },
         });
         if (!existingChat)
-          throw new BadRequestError(
-            "You cant update private chat or chat doesn't exist"
-          );
-
-        const isUserMember = existingChat.chatMembers.find(
-          (member) => member.userId === userId
-        );
-        if (!isUserMember)
-          throw new UnauthorizedError(
-            "Unautorized access, you are not a chat member!"
-          );
-
+          throw new BadRequestError("You can't update private chat.");
         const alreadyMember = existingChat.chatMembers.find(
           (member) => member.userId === memberId
         );
@@ -260,7 +239,7 @@ const chatService = {
           };
         }
         await tx.insert(chat_member).values({ chatId, userId: memberId });
-        return { message: `has added ${memberExist.username} to group!` };
+        return { message: ` has added ${memberExist.username} to group!` };
       });
       return result;
     } catch (error) {
