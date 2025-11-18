@@ -1,12 +1,4 @@
-import {
-  and,
-  ConsoleLogWriter,
-  DrizzleQueryError,
-  eq,
-  inArray,
-  ne,
-  sql,
-} from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/neon/connection.ts";
 import { chat, chat_member, user } from "../db/neon/schema.ts";
 import type {
@@ -192,8 +184,8 @@ const chatService = {
           where: eq(chat.id, chatId),
           with: { chatMembers: true },
         });
-
         if (!existingChat) throw new BadRequestError("Invalid chat Id");
+
         const isUserMember = existingChat.chatMembers.find(
           (member) => member.userId === userId
         );
@@ -208,6 +200,67 @@ const chatService = {
           .where(eq(chat.id, chatId))
           .returning({ id: chat.id, isGroup: chat.isGroup, name: chat.name });
         return updatedChat;
+      });
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  },
+  async updateChatMember(
+    userId: string,
+    chatId: string,
+    memberId: string
+  ): Promise<{ message: string }> {
+    //userId is one who sent request, memberId is person being added/removed
+    //1. user adding another user
+    //2. user removing another user
+    //3. user removing himself
+    try {
+      const result = await db.transaction(async (tx) => {
+        const memberExist = await tx.query.user.findFirst({
+          where: eq(user.id, memberId),
+        });
+        if (!memberExist)
+          throw new BadRequestError("You cannot add/remove non existent user!");
+        const userAndMemberAreSame = userId === memberId;
+        const existingChat = await tx.query.chat.findFirst({
+          where: and(eq(chat.id, chatId), eq(chat.isGroup, true)),
+          with: { chatMembers: true },
+        });
+        if (!existingChat)
+          throw new BadRequestError(
+            "You cant update private chat or chat doesn't exist"
+          );
+
+        const isUserMember = existingChat.chatMembers.find(
+          (member) => member.userId === userId
+        );
+        if (!isUserMember)
+          throw new UnauthorizedError(
+            "Unautorized access, you are not a chat member!"
+          );
+
+        const alreadyMember = existingChat.chatMembers.find(
+          (member) => member.userId === memberId
+        );
+        if (alreadyMember) {
+          await tx
+            .delete(chat_member)
+            .where(
+              and(
+                eq(chat_member.chatId, chatId),
+                eq(chat_member.userId, memberId)
+              )
+            );
+
+          return {
+            message: userAndMemberAreSame
+              ? `left the group`
+              : `removed ${memberExist.username} from group!`,
+          };
+        }
+        await tx.insert(chat_member).values({ chatId, userId: memberId });
+        return { message: `has added ${memberExist.username} to group!` };
       });
       return result;
     } catch (error) {

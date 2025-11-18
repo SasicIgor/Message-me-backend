@@ -82,6 +82,11 @@ export const updateChatMember = async (
   next: NextFunction
 ) => {
   try {
+    const { id: userId, username } = req.user!;
+    const { chatId } = req.params;
+    const { memberId } = req.body;
+    const result = await chatService.updateChatMember(userId, chatId, memberId);
+    res.status(201).json({ message: `${username} ${result.message}` });
   } catch (error) {
     next(error);
   }
