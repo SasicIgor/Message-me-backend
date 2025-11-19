@@ -60,9 +60,9 @@ export const messageService = {
     chatId: string,
     senderId: string,
     messageId: string
-  ): Promise<Message> {
+  ): Promise<void> {
     try {
-      const [result] = await db
+      await db
         .delete(message)
         .where(
           and(
@@ -70,10 +70,7 @@ export const messageService = {
             eq(message.id, messageId),
             eq(message.senderId, senderId)
           )
-        )
-        .returning();
-      if (!result) throw new BadRequestError("No message to delete");
-      return result;
+        );
     } catch (error) {
       throw error;
     }

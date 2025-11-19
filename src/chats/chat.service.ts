@@ -141,7 +141,7 @@ const chatService = {
       throw error;
     }
   },
-  async deleteChatForUser(userId: string, chatId: string) {
+  async deleteChatForUser(userId: string, chatId: string): Promise<void> {
     try {
       const deletedChat = await db.transaction(async (tx) => {
         const isUserChatMember = await tx.query.chat_member.findFirst({
@@ -166,19 +166,17 @@ const chatService = {
           return;
         }
         await tx.delete(chat).where(eq(chat.id, chatId));
-        return { message: "Chat deleted" };
       });
-      return deletedChat;
     } catch (error) {
       throw error;
     }
   },
   async updateChatName(
-    userId: string,
+    _userId: string,
     chatId: string,
     name: string
   ): Promise<ChatBasicInfo> {
-    try {
+    try { 
       const result = await db.transaction(async (tx) => {
         const [updatedChat] = await tx
           .update(chat)

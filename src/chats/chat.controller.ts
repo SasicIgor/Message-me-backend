@@ -25,7 +25,7 @@ export const getOrCreatePrivateChat = async (
   try {
     const { id: userId } = req.user!;
     const { memberId } = req.body;
-    if (!memberId || userId === memberId) {
+    if (userId === memberId) {
       throw new BadRequestError("Other member of chat is not provided!");
     }
     const result = await chatService.findOrCreatePrivateChat(userId, memberId);
@@ -89,8 +89,8 @@ export const deleteChat = async (
   try {
     const { id: userId } = req.user!;
     const { chatId } = req.params;
-    const result = await chatService.deleteChatForUser(userId, chatId);
-    res.status(204).json(result);
+    await chatService.deleteChatForUser(userId, chatId);
+    res.status(204);
   } catch (error) {
     next(error);
   }

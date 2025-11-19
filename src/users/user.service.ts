@@ -18,11 +18,15 @@ export const userService = {
     }
   },
 
-  async loginUser(username: string): Promise<User> {
+  async loginUser(username: string): Promise<Pick<User, "id" | "username">> {
     try {
-      const storedUser = await db.query.user.findFirst({
-        where: eq(user.username, username),
-      });
+      const [storedUser] = await db
+        .select({
+          id: user.id,
+          username: user.username,
+        })
+        .from(user)
+        .where(eq(user.username, username));
       if (!storedUser) {
         throw new UnauthorizedError("Invalid credentials!");
       }
@@ -52,13 +56,7 @@ export const userService = {
 
   async deleteUser(id: string) {
     try {
-      const [deletedUser] = await db
-        .delete(user)
-        .where(eq(user.id, id))
-        .returning();
-      if (!deletedUser)
-        throw new UnauthorizedError("No user deleted. Unauthorized access!");
-      return deletedUser;
+      await db.delete(user).where(eq(user.id, id)).returning();
     } catch (error) {
       throw error;
     }
