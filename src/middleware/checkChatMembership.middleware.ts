@@ -22,9 +22,6 @@ export const checkChatMembership = async (
   try {
     const userId = req.user!.id;
     const { chatId } = req.params;
-    if (!chatId) {
-      return next(new BadRequestError("ChatId required!"));
-    }
 
     const checkMember = await isMember(userId, chatId);
     if (!checkMember) {

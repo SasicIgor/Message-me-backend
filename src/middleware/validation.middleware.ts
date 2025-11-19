@@ -16,3 +16,18 @@ export const validateBody = (schema: ZodType) => {
     }
   };
 };
+
+export const validateParams = (schema: ZodType) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      schema.parse(req.params);
+      next();
+    } catch (error) {
+      console.log(1);
+      if (error instanceof ZodError) {
+        return next(new BadRequestError("Invalid UUID format for message or chat"));
+      }
+      next(new ServerError("Server error!"));
+    }
+  };
+};

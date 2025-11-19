@@ -7,17 +7,21 @@ import {
 } from "./message.controller.ts";
 import { authMiddleware } from "../middleware/auth.middleware.ts";
 import { checkChatMembership } from "../middleware/checkChatMembership.middleware.ts";
-import { validateBody } from "../middleware/validation.middleware.ts";
 import {
-  createMsgSchema,
-  editMsgSchema,
-} from "../validations/message-validation.ts";
+  validateBody,
+  validateParams,
+} from "../middleware/validation.middleware.ts";
+import {
+  messageSchema
+} from "../validations/message.validation.ts";
+import { paramsSchema } from "../validations/uuid.validation.ts";
 
 const router = Router();
 
 router.get(
   "/:chatId",
   authMiddleware,
+  validateParams(paramsSchema),
   checkChatMembership,
   getMessages
 );
@@ -25,19 +29,22 @@ router.post(
   "/:chatId",
   authMiddleware,
   checkChatMembership,
-  validateBody(createMsgSchema),
+  validateParams(paramsSchema),
+  validateBody(messageSchema),
   createMessage
 );
 router.patch(
   "/:chatId/:messageId",
   authMiddleware,
+  validateParams(paramsSchema),
+  validateBody(messageSchema),
   checkChatMembership,
-  validateBody(editMsgSchema),
   editMessage
 );
 router.delete(
   "/:chatId/:messageId",
   authMiddleware,
+  validateParams(paramsSchema),
   checkChatMembership,
   deleteMessage
 );

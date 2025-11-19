@@ -17,17 +17,6 @@ export const getUserChats = async (
   }
 };
 
-export const getOneChat = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const getOrCreatePrivateChat = async (
   req: AuthenticatedRequest,
   res: Response,
