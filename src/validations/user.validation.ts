@@ -42,3 +42,17 @@ export const loginSchema = z.object({
       "Password must have one upper letter, one lower case letter, one number and one special sign"
     ),
 });
+
+export const updateUserSchema = z
+  .object({
+    username: z
+      .string()
+      .trim()
+      .min(3, "Username must have at least 3 characters")
+      .max(20, "Username must be less then 20 characters")
+      .optional(),
+    email: z.email("Invalid email").trim().optional(),
+  })
+  .refine((data) => data.username || data.email, {
+    message: "You must provide new values for informations you want to update!",
+  });
