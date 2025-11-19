@@ -51,12 +51,9 @@ export const loginUser = async (
 ) => {
   try {
     const { username, password } = req.body;
-    const storedUser = await userService.loginUser(username);
+    const storedUser = await userService.loginUser(username, password);
 
-    // const isPassCorrect = await comparePassword(password, storedUser.password);
-    // if (!isPassCorrect) {
-    //   throw new UnauthorizedError("Invalid credentials!");
-    // }
+    
 
     const token = await generateToken({ id: storedUser.id, username });
 

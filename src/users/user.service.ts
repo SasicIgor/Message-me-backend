@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "../db/neon/connection.ts";
 import { user, type User } from "../db/neon/schema.ts";
 import { UnauthorizedError } from "../errors/unauthorized.error.ts";
+import { comparePassword } from "../utils/password.ts";
 
 export const userService = {
   async registerUser(
@@ -18,16 +19,26 @@ export const userService = {
     }
   },
 
-  async loginUser(username: string): Promise<Pick<User, "id" | "username">> {
+  async loginUser(
+    username: string,
+    pass: string
+  ): Promise<Pick<User, "id" | "username">> {
     try {
-      const [storedUser] = await db
+      const [{ password, ...storedUser }] = await db
         .select({
           id: user.id,
           username: user.username,
+          password: user.password,
         })
         .from(user)
         .where(eq(user.username, username));
       if (!storedUser) {
+        throw new UnauthorizedError("Invalid credentials!");
+      }
+
+      const isPassCorrect = await comparePassword(pass, password);
+
+      if (!isPassCorrect) {
         throw new UnauthorizedError("Invalid credentials!");
       }
       return storedUser;

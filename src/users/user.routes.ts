@@ -17,8 +17,8 @@ const router = Router();
 
 router
   .post("/user/register", validateBody(registrationSchema), registerUser)
-  // validateBody(loginSchema),
-  .post("/user/login", loginUser)
+
+  .post("/user/login", validateBody(loginSchema), loginUser)
   .patch(
     "/user/update",
     authMiddleware,
