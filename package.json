@@ -12,6 +12,9 @@
     "test": "vitest run"
   },
   "type": "module",
+  "engines": {
+    "node": ">=23.6.0"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
