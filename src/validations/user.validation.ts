@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const passRegex =
+export const passRegex =
   /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
 
 export const registrationSchema = z

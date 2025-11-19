@@ -100,5 +100,5 @@ export type Chat = typeof chat.$inferSelect;
 export type Message = typeof message.$inferInsert;
 export type ChatMember = typeof chat_member.$inferSelect;
 
-export const insertUserSchema = createInsertSchema(user);
-export const selectUser = createSelectSchema(user);
+// export const insertUserSchema = createInsertSchema(user);
+// export const selectUser = createSelectSchema(user);
