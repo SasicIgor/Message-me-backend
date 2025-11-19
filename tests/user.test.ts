@@ -7,6 +7,8 @@ describe("User Endpoints", () => {
   afterEach(async () => {
     await cleanupDatabase();
   });
+
+  //register user tests
   describe("POST /api/v1/auth/user/register Integration Test", () => {
     it("should create a new user with valid data", async () => {
       const userData = {
@@ -19,11 +21,51 @@ describe("User Endpoints", () => {
         .post("/api/v1/auth/user/register")
         .send(userData)
         .expect(201);
+      expect(response.body).toHaveProperty("message");
       expect(response.body).toHaveProperty("newUser");
       expect(response.body).toHaveProperty("token");
       expect(response.body.newUser).toHaveProperty("username");
       expect(response.body.newUser).toHaveProperty("id");
       expect(response.body.newUser).not.toHaveProperty("password");
+    });
+
+    it("should throw an error for invalid email", async () => {
+      const userData = {
+        email: "igor.igor.com",
+        password: "Test1234!",
+        confirmedPassword: "Test1234!",
+        username: "Igor",
+      };
+      await request(app)
+        .post("/api/v1/auth/user/register")
+        .send(userData)
+        .expect(400);
+    });
+
+    it("should throw an error for invalid password", async () => {
+      const userData = {
+        email: "igor@igor.com",
+        password: "Test1234",
+        confirmedPassword: "Test1234",
+        username: "Igor",
+      };
+      await request(app)
+        .post("/api/v1/auth/user/register")
+        .send(userData)
+        .expect(400);
+    });
+
+    it("should throw an error for passwords don't match", async () => {
+      const userData = {
+        email: "igor@igor.com",
+        password: "Test1234!",
+        confirmedPassword: "Test123!",
+        username: "Igor",
+      };
+      await request(app)
+        .post("/api/v1/auth/user/register")
+        .send(userData)
+        .expect(400);
     });
   });
 });
