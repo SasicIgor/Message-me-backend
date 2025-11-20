@@ -1,6 +1,6 @@
 # MESSAGE ME (chat app) backend
 
-## 1. Goal
+## Goal
 
 Goal of the project is to get familiar with backend side of application as a front end developer.
 
