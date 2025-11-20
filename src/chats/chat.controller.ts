@@ -2,6 +2,7 @@ import type { NextFunction, Response } from "express";
 import { type AuthenticatedRequest } from "../middleware/auth.middleware.ts";
 import chatService from "./chat.service.ts";
 import { BadRequestError } from "../errors/bad-request.error.ts";
+import { getUserAndChat } from "../utils/getUserAndChat.ts";
 
 export const getUserChats = async (
   req: AuthenticatedRequest,
@@ -9,7 +10,7 @@ export const getUserChats = async (
   next: NextFunction
 ) => {
   try {
-    const { id: userId } = req.user!;
+    const { userId } = getUserAndChat(req);
     const chats = await chatService.getAllChats(userId);
     res.status(200).json({ message: "Successfull", chats });
   } catch (error) {
@@ -23,7 +24,7 @@ export const getOrCreatePrivateChat = async (
   next: NextFunction
 ) => {
   try {
-    const { id: userId } = req.user!;
+    const { userId } = getUserAndChat(req);
     const { memberId } = req.body;
     if (userId === memberId) {
       throw new BadRequestError("Other member of chat is not provided!");
@@ -41,8 +42,10 @@ export const createGroupChat = async (
   next: NextFunction
 ) => {
   try {
+    const { userId } = getUserAndChat(req);
     const { memberIds, name } = req.body;
-    const result = await chatService.createGroupChat(memberIds, name);
+    const allMembers = [...memberIds, userId];
+    const result = await chatService.createGroupChat(allMembers, name);
     res.status(200).json({ message: "Successfull chat creation", result });
   } catch (error) {
     next(error);
@@ -55,8 +58,7 @@ export const updateChatName = async (
   next: NextFunction
 ) => {
   try {
-    const { id: userId } = req.user!;
-    const { chatId } = req.params;
+    const { chatId, userId } = getUserAndChat(req);
     const { name } = req.body;
     const result = await chatService.updateChatName(userId, chatId, name);
     res.status(201).json({ message: "Name updated successfully!", result });
@@ -71,8 +73,7 @@ export const updateChatMember = async (
   next: NextFunction
 ) => {
   try {
-    const { id: userId, username } = req.user!;
-    const { chatId } = req.params;
+    const { chatId, userId, username } = getUserAndChat(req);
     const { memberId } = req.body;
     const result = await chatService.updateChatMember(userId, chatId, memberId);
     res.status(201).json({ message: `${username} ${result.message}` });
@@ -87,8 +88,7 @@ export const deleteChat = async (
   next: NextFunction
 ) => {
   try {
-    const { id: userId } = req.user!;
-    const { chatId } = req.params;
+    const { chatId, userId } = getUserAndChat(req);
     await chatService.deleteChatForUser(userId, chatId);
     res.status(204);
   } catch (error) {

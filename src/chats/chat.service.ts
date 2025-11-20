@@ -143,7 +143,7 @@ const chatService = {
   },
   async deleteChatForUser(userId: string, chatId: string): Promise<void> {
     try {
-      const deletedChat = await db.transaction(async (tx) => {
+      await db.transaction(async (tx) => {
         const isUserChatMember = await tx.query.chat_member.findFirst({
           where: and(
             eq(chat_member.chatId, chatId),
@@ -176,7 +176,7 @@ const chatService = {
     chatId: string,
     name: string
   ): Promise<ChatBasicInfo> {
-    try { 
+    try {
       const result = await db.transaction(async (tx) => {
         const [updatedChat] = await tx
           .update(chat)

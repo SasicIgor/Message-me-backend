@@ -2,12 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import { db } from "../db/neon/connection.ts";
 import { user } from "../db/neon/schema.ts";
 import { generateToken } from "../utils/jwt.ts";
-import { comparePassword, hashPassword } from "../utils/password.ts";
+import { hashPassword } from "../utils/password.ts";
 import { eq } from "drizzle-orm";
 import { UniqueConstraintError } from "../errors/unique-constarint.error.ts";
 import { userService } from "./user.service.ts";
-import { UnauthorizedError } from "../errors/unauthorized.error.ts";
 import { type AuthenticatedRequest } from "../middleware/auth.middleware.ts";
+import { getUserAndChat } from "../utils/getUserAndChat.ts";
 
 export const registerUser = async (
   req: Request,
@@ -53,8 +53,6 @@ export const loginUser = async (
     const { username, password } = req.body;
     const storedUser = await userService.loginUser(username, password);
 
-    
-
     const token = await generateToken({ id: storedUser.id, username });
 
     res.status(200).json({
@@ -73,13 +71,13 @@ export const updateUser = async (
   next: NextFunction
 ) => {
   try {
-    const { id: userId } = req.user!;
+    const { userId } = getUserAndChat(req);
     const newData = req.body;
 
     const updatedUser = await userService.updateUser(userId, newData);
     res
       .status(200)
-      .json({ message: "User successfully updated!", data: updatedUser });
+      .json({ message: "User successfully updated!", user: updatedUser });
   } catch (error) {
     next(error);
   }
@@ -91,7 +89,7 @@ export const deleteUser = async (
   next: NextFunction
 ) => {
   try {
-    const { id: userId } = req.user!;
+    const { userId } = getUserAndChat(req);
     await userService.deleteUser(userId);
     res.status(204);
   } catch (error) {
