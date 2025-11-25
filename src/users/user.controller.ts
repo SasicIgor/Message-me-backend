@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { db } from "../db/neon/connection.ts";
-import { user } from "../db/neon/schema.ts";
+import { users } from "../db/neon/schema.ts";
 import { generateToken } from "../utils/jwt.ts";
 import { hashPassword } from "../utils/password.ts";
 import { eq } from "drizzle-orm";
@@ -14,10 +14,11 @@ export const registerUser = async (
   res: Response,
   next: NextFunction
 ) => {
+  console.log(1);
   try {
     const { username, password, confirmedPassword, email } = req.body;
-    const usernameExist = await db.query.user.findFirst({
-      where: eq(user.username, username),
+    const usernameExist = await db.query.users.findFirst({
+      where: eq(users.username, username),
     });
     if (usernameExist) {
       throw new UniqueConstraintError("Username already exist!");
@@ -26,7 +27,6 @@ export const registerUser = async (
       res.status(401).json("Password must be the same as confirmed password");
     }
     const hashedPassword = await hashPassword(password);
-
     const newUser = await userService.registerUser({
       username,
       password: hashedPassword,
@@ -40,6 +40,7 @@ export const registerUser = async (
 
     res.status(201).json({ message: "New user created!", newUser, token });
   } catch (error) {
+    console.log("ERROR: ", error);
     next(error);
   }
 };

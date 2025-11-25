@@ -11,8 +11,8 @@ import {
 import { relations } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 //users
-export const user = pgTable(
-  "user",
+export const users = pgTable(
+  "users",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     username: varchar("username").notNull().unique(),
@@ -34,7 +34,7 @@ export const chat_member = pgTable(
   "chat_member",
   {
     userId: uuid("user_id")
-      .references(() => user.id)
+      .references(() => users.id)
       .notNull(),
     chatId: uuid("chat_id")
       .references(() => chat.id, { onDelete: "cascade" })
@@ -54,7 +54,7 @@ export const message = pgTable(
       .references(() => chat.id, { onDelete: "cascade" })
       .notNull(),
     senderId: uuid("user_id")
-      .references(() => user.id)
+      .references(() => users.id)
       .notNull(),
     content: varchar("content").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -63,7 +63,7 @@ export const message = pgTable(
 );
 
 //relations
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(users, ({ many }) => ({
   messages: many(message),
   chatMembers: many(chat_member),
 }));
@@ -74,9 +74,9 @@ export const chatRelations = relations(chat, ({ many }) => ({
 }));
 
 export const chatMemberRelations = relations(chat_member, ({ one }) => ({
-  user: one(user, {
+  user: one(users, {
     fields: [chat_member.userId],
-    references: [user.id],
+    references: [users.id],
   }),
   chat: one(chat, {
     fields: [chat_member.chatId],
@@ -85,9 +85,9 @@ export const chatMemberRelations = relations(chat_member, ({ one }) => ({
 }));
 
 export const messageRelations = relations(message, ({ one }) => ({
-  user: one(user, {
+  user: one(users, {
     fields: [message.senderId],
-    references: [user.id],
+    references: [users.id],
   }),
   chat: one(chat, {
     fields: [message.chatId],
@@ -95,7 +95,7 @@ export const messageRelations = relations(message, ({ one }) => ({
   }),
 }));
 
-export type User = typeof user.$inferSelect;
+export type User = typeof users.$inferSelect;
 export type Chat = typeof chat.$inferSelect;
 export type Message = typeof message.$inferInsert;
 export type ChatMember = typeof chat_member.$inferSelect;

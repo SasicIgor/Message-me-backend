@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/neon/connection.ts";
-import { chat, chat_member, user } from "../db/neon/schema.ts";
+import { chat, chat_member, users } from "../db/neon/schema.ts";
 import type {
   SingleChatBasic,
   ChatBasicInfo,
@@ -54,9 +54,9 @@ const chatService = {
     try {
       //find a member from the chat and throw error if it doesn't exist
       const [otherMember] = await db
-        .select({ memberId: user.id, memberUsername: user.username })
-        .from(user)
-        .where(eq(user.id, memberId));
+        .select({ memberId: users.id, memberUsername: users.username })
+        .from(users)
+        .where(eq(users.id, memberId));
       if (!otherMember) throw new BadRequestError("Other user doesn't exist.");
 
       const membersId = [userId, memberId];
@@ -103,9 +103,9 @@ const chatService = {
     try {
       const newGroupChat = await db.transaction(async (tx) => {
         const allUsersExist = await tx
-          .select({ id: user.id })
-          .from(user)
-          .where(inArray(user.id, memberIds));
+          .select({ id: users.id })
+          .from(users)
+          .where(inArray(users.id, memberIds));
 
         if (allUsersExist.length !== memberIds.length) {
           throw new BadRequestError("All users must exist!");
@@ -202,8 +202,8 @@ const chatService = {
     try {
       const result = await db.transaction(async (tx) => {
         //check if member exist in user table
-        const memberExist = await tx.query.user.findFirst({
-          where: eq(user.id, memberId),
+        const memberExist = await tx.query.users.findFirst({
+          where: eq(users.id, memberId),
         });
         if (!memberExist)
           throw new BadRequestError("You cannot add/remove non existent user!");

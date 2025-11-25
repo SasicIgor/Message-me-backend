@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/neon/connection.ts";
-import { user, type User } from "../db/neon/schema.ts";
+import { users, type User } from "../db/neon/schema.ts";
 import { UnauthorizedError } from "../errors/unauthorized.error.ts";
 import { comparePassword } from "../utils/password.ts";
 
@@ -10,9 +10,9 @@ export const userService = {
   ): Promise<Pick<User, "id" | "username">> {
     try {
       const [newUser] = await db
-        .insert(user)
+        .insert(users)
         .values(data)
-        .returning({ id: user.id, username: user.username });
+        .returning({ id: users.id, username: users.username });
       return newUser;
     } catch (error) {
       throw error;
@@ -26,12 +26,12 @@ export const userService = {
     try {
       const [{ password, ...storedUser }] = await db
         .select({
-          id: user.id,
-          username: user.username,
-          password: user.password,
+          id: users.id,
+          username: users.username,
+          password: users.password,
         })
-        .from(user)
-        .where(eq(user.username, username));
+        .from(users)
+        .where(eq(users.username, username));
       if (!storedUser) {
         throw new UnauthorizedError("Invalid credentials!");
       }
@@ -53,10 +53,10 @@ export const userService = {
   ): Promise<Pick<User, "username" | "id">> {
     try {
       const [updatedUser] = await db
-        .update(user)
+        .update(users)
         .set(data)
-        .where(eq(user.id, userId))
-        .returning({ username: user.username, id: user.id });
+        .where(eq(users.id, userId))
+        .returning({ username: users.username, id: users.id });
       if (!updatedUser)
         throw new UnauthorizedError("No user edited. Unauthorized access!");
       return updatedUser;
@@ -67,7 +67,7 @@ export const userService = {
 
   async deleteUser(id: string) {
     try {
-      await db.delete(user).where(eq(user.id, id)).returning();
+      await db.delete(users).where(eq(users.id, id)).returning();
     } catch (error) {
       throw error;
     }
