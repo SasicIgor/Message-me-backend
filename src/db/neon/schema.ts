@@ -62,6 +62,19 @@ export const message = pgTable(
   (t) => [index("msg_chat").on(t.chatId), index("created_at").on(t.createdAt)]
 );
 
+export const refreshToken = pgTable(
+  "refresh_token",
+  {
+    hashedToken: varchar("hashed_token").primaryKey().notNull(),
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    expiresAt: timestamp("expires_at").notNull(),
+  },
+  (t) => [uniqueIndex("refresh_token_idx").on(t.userId)]
+);
+
 //relations
 export const userRelations = relations(users, ({ many }) => ({
   messages: many(message),
@@ -92,6 +105,13 @@ export const messageRelations = relations(message, ({ one }) => ({
   chat: one(chat, {
     fields: [message.chatId],
     references: [chat.id],
+  }),
+}));
+
+export const refreshTokenRleations = relations(refreshToken, ({ one }) => ({
+  user: one(users, {
+    fields: [refreshToken.userId],
+    references: [users.id],
   }),
 }));
 
