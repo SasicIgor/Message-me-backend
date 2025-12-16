@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, ilike } from "drizzle-orm";
 import { db } from "../db/neon/connection.ts";
 import { users, type User } from "../db/neon/schema.ts";
 import { UnauthorizedError } from "../errors/unauthorized.error.ts";
@@ -42,6 +42,23 @@ export const userService = {
         throw new UnauthorizedError("Invalid credentials!");
       }
       return storedUser;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  async getUserByUsername(
+    name: string
+  ): Promise<Pick<User, "username" | "id">[]> {
+    try {
+      const searchedUsers = await db
+        .select({
+          username: users.username,
+          id: users.id,
+        })
+        .from(users)
+        .where(ilike(users.username, `%${name}%`));
+      return searchedUsers;
     } catch (error) {
       throw error;
     }

@@ -19,9 +19,9 @@ export const messageService = {
     chatId: string,
     senderId: string,
     content: string
-  ): Promise<Message> {
+  ): Promise<Message[]> {
     try {
-      const [msg] = await db
+      const msg = await db
         .insert(message)
         .values({ content, chatId, senderId })
         .returning();
@@ -36,9 +36,9 @@ export const messageService = {
     senderId: string,
     messageId: string,
     content: string
-  ): Promise<Message> {
+  ): Promise<Message[]> {
     try {
-      const [result] = await db
+      const result = await db
         .update(message)
         .set({ content })
         .where(

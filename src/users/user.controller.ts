@@ -38,7 +38,9 @@ export const registerUser = async (
       username: newUser.username,
     });
 
-    res.status(201).json({ message: "New user created!", newUser, token });
+    res
+      .status(201)
+      .json({ message: "New user created!", data: [{ user: newUser, token }] });
   } catch (error) {
     console.log("ERROR: ", error);
     next(error);
@@ -58,9 +60,24 @@ export const loginUser = async (
 
     res.status(200).json({
       message: "Successfully logged in",
-      token,
-      user: { username, id: storedUser.id },
+
+      data: [{ user:storedUser, token }],
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const findByUsername = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { username } = req.params;
+    console.log(username);
+    const searchedUsers = await userService.getUserByUsername(username);
+    res.status(200).json({ message: "Success", data: searchedUsers });
   } catch (error) {
     next(error);
   }
@@ -78,7 +95,7 @@ export const updateUser = async (
     const updatedUser = await userService.updateUser(userId, newData);
     res
       .status(200)
-      .json({ message: "User successfully updated!", user: updatedUser });
+      .json({ message: "User successfully updated!", data: updatedUser });
   } catch (error) {
     next(error);
   }

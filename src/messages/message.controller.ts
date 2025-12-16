@@ -13,7 +13,7 @@ export const getMessages = async (
   try {
     const { chatId } = getUserAndChat(req);
     const msgs: Required<Message[]> = await messageService.getMessages(chatId);
-    res.status(200).json({ message: "Success.", msgs });
+    res.status(200).json({ message: "Success.", data:msgs });
   } catch (error) {
     next(error);
   }
@@ -28,7 +28,7 @@ export const createMessage = async (
     const { chatId, userId } = getUserAndChat(req);
     const { content } = req.body;
     const msg = await messageService.createMessage(chatId, userId, content);
-    res.status(201).json({ message: "Message created", msg });
+    res.status(201).json({ message: "Message created", data:msg });
   } catch (error) {
     next(error);
   }
