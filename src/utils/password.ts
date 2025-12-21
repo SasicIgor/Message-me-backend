@@ -1,5 +1,5 @@
-import bcrypt from "bcrypt";
 import "dotenv/config";
+import bcrypt from "bcrypt";
 
 export const hashPassword = async (password: string) => {
   return bcrypt.hash(password, Number(process.env.BCRYPT_ROUNDS || 12));

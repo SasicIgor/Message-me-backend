@@ -1,6 +1,6 @@
 import { db } from "./connection.ts";
 import {
-  user,
+  users,
   chat,
   chat_member,
   message,
@@ -17,7 +17,7 @@ const seed = async () => {
     await db.delete(message);
     await db.delete(chat_member);
     await db.delete(chat);
-    await db.delete(user);
+    await db.delete(users);
 
     //=====INSERTING USERS=====
 
@@ -32,9 +32,9 @@ const seed = async () => {
     });
     console.log("Inserting 10 users...");
     const insertedUsers = await db
-      .insert(user)
+      .insert(users)
       .values(userData)
-      .returning({ id: user.id });
+      .returning({ id: users.id });
     const usersId = insertedUsers.map((u) => u.id);
 
     //=====INSERTING CHATS=====

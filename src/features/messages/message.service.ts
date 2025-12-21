@@ -1,7 +1,9 @@
 import { and, desc, eq } from "drizzle-orm";
-import { db } from "../db/neon/connection.ts";
-import { type Message, message } from "../db/neon/schema.ts";
-import { BadRequestError } from "../errors/bad-request.error.ts";
+
+import { db } from "#db/neon/connection.ts";
+import { type Message, message } from "#db/neon/schema.ts";
+
+import { BadRequestError } from "#errors/bad-request.error.ts";
 
 export const messageService = {
   async getMessages(chatId: string): Promise<Message[]> {

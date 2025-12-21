@@ -1,4 +1,4 @@
-import { type AuthenticatedRequest } from "../middleware/auth.middleware.ts";
+import { type AuthenticatedRequest } from "#middleware/auth.middleware.ts";
 
 export const getUserAndChat = (req: AuthenticatedRequest) => {
   return {

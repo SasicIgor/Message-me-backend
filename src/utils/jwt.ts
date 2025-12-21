@@ -1,10 +1,9 @@
-import { SignJWT, jwtVerify } from "jose";
-import type { Response } from "express";
-import { createSecretKey } from "crypto";
 import "dotenv/config";
+import { SignJWT, jwtVerify } from "jose";
+import { createSecretKey } from "crypto";
+
 import { hashPassword as hashString } from "./password.ts";
-import { db } from "../db/neon/connection.ts";
-import { refreshToken } from "../db/neon/schema.ts";
+
 export type JWTPayload = {
   id: string;
   username: string;

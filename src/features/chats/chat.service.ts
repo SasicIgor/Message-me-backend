@@ -1,14 +1,13 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { db } from "../db/neon/connection.ts";
-import { chat, chat_member, users } from "../db/neon/schema.ts";
-import type {
-  SingleChatBasic,
-  ChatBasicInfo,
-  GroupChatBasicInfo,
-} from "./chat.types.ts";
-import { DatabaseError } from "../errors/database.error.ts";
-import { BadRequestError } from "../errors/bad-request.error.ts";
-import { UnauthorizedError } from "../errors/unauthorized.error.ts";
+
+import type { SingleChatBasic, ChatBasicInfo, GroupChatBasicInfo } from "./chat.types.ts";
+
+import { db } from "#db/neon/connection.ts";
+import { chat, chat_member, users } from "#db/neon/schema.ts";
+
+import { DatabaseError } from "#errors/database.error.ts";
+import { BadRequestError } from "#errors/bad-request.error.ts";
+import { UnauthorizedError } from "#errors/unauthorized.error.ts";
 
 const chatService = {
   async getAllChats(userId: string): Promise<ChatBasicInfo[]> {

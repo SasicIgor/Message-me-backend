@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
-import { verifyToken, type JWTPayload } from "../utils/jwt.ts";
-import { UnauthorizedError } from "../errors/unauthorized.error.ts";
+
+import { verifyToken, type JWTPayload } from "#utils/jwt.ts";
+import { UnauthorizedError } from "#errors/unauthorized.error.ts";
 //setting up an user in request
 export interface AuthenticatedRequest extends Request {
   user?: JWTPayload;

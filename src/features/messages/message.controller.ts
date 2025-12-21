@@ -1,9 +1,10 @@
 import type { NextFunction, Response } from "express";
 
-import { type AuthenticatedRequest } from "../middleware/auth.middleware.ts";
-import { getUserAndChat } from "../utils/getUserAndChat.ts";
 import { messageService } from "./message.service.ts";
-import { type Message } from "../db/neon/schema.ts";
+
+import { type Message } from "#db/neon/schema.ts";
+import { type AuthenticatedRequest } from "#middleware/auth.middleware.ts";
+import { getUserAndChat } from "#utils/getUserAndChat.ts";
 
 export const getMessages = async (
   req: AuthenticatedRequest,

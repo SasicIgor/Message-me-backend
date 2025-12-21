@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import {
   getOrCreatePrivateChat,
   deleteChat,
@@ -7,19 +8,18 @@ import {
   updateChatName,
   updateChatMember,
 } from "./chat.controller.ts";
-import { authMiddleware } from "../middleware/auth.middleware.ts";
-import { checkChatMembership } from "../middleware/checkChatMembership.middleware.ts";
-import {
-  validateBody,
-  validateParams,
-} from "../middleware/validation.middleware.ts";
-import { paramsSchema } from "../validations/uuid.validation.ts";
+
+import { authMiddleware } from "#middleware/auth.middleware.ts";
+import { checkChatMembership } from "#middleware/checkChatMembership.middleware.ts";
+import { validateBody, validateParams} from "#middleware/validation.middleware.ts";
+
+import { paramsSchema } from "#validations/uuid.validation.ts";
 import {
   createGroupChatSchema,
   getOrCreatePrivateChatSchema,
   updateChatMembersSchema,
   updateChatNameSchema,
-} from "../validations/chat.validation.ts";
+} from "#validations/chat.validation.ts";
 
 const router = Router();
 

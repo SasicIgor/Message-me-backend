@@ -1,5 +1,6 @@
-import { HttpError } from "../errors/http.error.ts";
 import type { NextFunction, Request, Response } from "express";
+
+import { HttpError } from "#errors/http.error.ts";
 
 export function errorMiddleware(
   err: HttpError,

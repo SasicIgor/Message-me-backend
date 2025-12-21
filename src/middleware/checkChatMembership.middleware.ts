@@ -1,10 +1,13 @@
 import type { NextFunction, Response } from "express";
-import { type AuthenticatedRequest } from "./auth.middleware.ts";
-import { db } from "../db/neon/connection.ts";
 import { and, eq } from "drizzle-orm";
-import { chat_member } from "../db/neon/schema.ts";
-import { UnauthorizedError } from "../errors/unauthorized.error.ts";
-import { ServerError } from "../errors/server.error.ts";
+
+import { type AuthenticatedRequest } from "./auth.middleware.ts";
+
+import { db } from "#db/neon/connection.ts";
+import { chat_member } from "#db/neon/schema.ts";
+
+import { UnauthorizedError } from "#errors/unauthorized.error.ts";
+import { ServerError } from "#errors/server.error.ts";
 
 const isMember = async (userId: string, chatId: string): Promise<boolean> => {
   const member = await db.query.chat_member.findFirst({
