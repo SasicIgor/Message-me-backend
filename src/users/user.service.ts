@@ -1,6 +1,6 @@
 import { and, eq, ilike } from "drizzle-orm";
 import { db } from "../db/neon/connection.ts";
-import { users, type User } from "../db/neon/schema.ts";
+import { refreshToken, users, type User } from "../db/neon/schema.ts";
 import { UnauthorizedError } from "../errors/unauthorized.error.ts";
 import { comparePassword } from "../utils/password.ts";
 
@@ -85,6 +85,19 @@ export const userService = {
   async deleteUser(id: string) {
     try {
       await db.delete(users).where(eq(users.id, id)).returning();
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  async storeRefreshToken(token: string, id: string) {
+    try {
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const [storedToken] = await db
+        .insert(refreshToken)
+        .values({ expiresAt, userId: id, hashedToken: token })
+        .returning();
+      return storedToken;
     } catch (error) {
       throw error;
     }

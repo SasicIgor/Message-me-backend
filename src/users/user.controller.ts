@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { db } from "../db/neon/connection.ts";
 import { users } from "../db/neon/schema.ts";
-import { generateToken } from "../utils/jwt.ts";
+import { signAccessToken, signRefreshToken } from "../utils/jwt.ts";
 import { hashPassword } from "../utils/password.ts";
 import { eq } from "drizzle-orm";
 import { UniqueConstraintError } from "../errors/unique-constarint.error.ts";
@@ -14,7 +14,6 @@ export const registerUser = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log(1);
   try {
     const { username, password, confirmedPassword, email } = req.body;
     const usernameExist = await db.query.users.findFirst({
@@ -33,14 +32,34 @@ export const registerUser = async (
       email,
     });
 
-    const token = await generateToken({
+    const accessToken = await signAccessToken({
       id: newUser.id,
       username: newUser.username,
     });
 
+    const refreshToken = await signRefreshToken({
+      id: newUser.id,
+      username: newUser.username,
+    });
+
+    const hashedRefToken = await hashPassword(refreshToken);
+    const { hashedToken, expiresAt } = await userService.storeRefreshToken(
+      hashedRefToken,
+      newUser.id
+    );
+
     res
+      .cookie("refreshToken", hashedToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+        expires: expiresAt,
+      })
       .status(201)
-      .json({ message: "New user created!", data: [{ user: newUser, token }] });
+      .json({
+        message: "New user created!",
+        data: [{ user: newUser, token: accessToken }],
+      });
   } catch (error) {
     console.log("ERROR: ", error);
     next(error);
@@ -56,12 +75,12 @@ export const loginUser = async (
     const { username, password } = req.body;
     const storedUser = await userService.loginUser(username, password);
 
-    const token = await generateToken({ id: storedUser.id, username });
+    const token = await signAccessToken({ id: storedUser.id, username });
 
     res.status(200).json({
       message: "Successfully logged in",
 
-      data: [{ user:storedUser, token }],
+      data: [{ user: storedUser, token }],
     });
   } catch (error) {
     next(error);
