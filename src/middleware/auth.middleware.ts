@@ -26,12 +26,13 @@ export const authMiddleware = async (
       return next(new UnauthorizedError("Token required!"));
     }
 
-    const payload = await verifyToken(token);
+    const payload = await verifyToken(token, "access");
     if (!payload) return next(new UnauthorizedError("Invalid token!"));
 
     req.user = payload;
     next();
   } catch (error) {
+    console.log("ERROR: ", error);
     return next(error);
   }
 };

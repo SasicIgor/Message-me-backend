@@ -1,9 +1,9 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { db } from "#db/neon/connection.ts";
 import { refreshToken, type User, users } from "#db/neon/schema.ts";
 
-import { comparePassword } from "#utils/password.ts";
+import { compareString } from "#utils/password.ts";
 import { UnauthorizedError } from "#errors/unauthorized.error.ts";
 
 export const authService = {
@@ -38,7 +38,7 @@ export const authService = {
         throw new UnauthorizedError("Invalid credentials!");
       }
 
-      const isPassCorrect = await comparePassword(pass, password);
+      const isPassCorrect = await compareString(pass, password);
 
       if (!isPassCorrect) {
         throw new UnauthorizedError("Invalid credentials!");
@@ -55,10 +55,31 @@ export const authService = {
       const [storedToken] = await db
         .insert(refreshToken)
         .values({ expiresAt, userId: id, hashedToken: token })
+        .onConflictDoUpdate({
+          target: refreshToken.userId,
+          set: {
+            hashedToken: token,
+            expiresAt,
+          },
+        })
         .returning();
       return storedToken;
     } catch (error) {
+      console.log("token error:", error);
       throw error;
     }
+  },
+
+  async getRefreshToken(userId: string) {
+    const [storedToken] = await db
+      .select({
+        hashedToken: refreshToken.hashedToken,
+        expiresAt: refreshToken.expiresAt,
+      })
+      .from(refreshToken)
+      .where(eq(refreshToken.userId, userId));
+    console.log(storedToken);
+
+    return storedToken;
   },
 };

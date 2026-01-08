@@ -1,13 +1,13 @@
 import "dotenv/config";
 import bcrypt from "bcrypt";
 
-export const hashPassword = async (password: string) => {
-  return bcrypt.hash(password, Number(process.env.BCRYPT_ROUNDS || 12));
+export const hashString = async (str: string) => {
+  return bcrypt.hash(str, Number(process.env.BCRYPT_ROUNDS || 12));
 };
 
-export const comparePassword = async (
-  password: string,
-  hashedPassword: string
+export const compareString = async (
+  str: string,
+  hashedStr: string
 ) => {
-  return bcrypt.compare(password, hashedPassword);
+  return bcrypt.compare(str, hashedStr);
 };

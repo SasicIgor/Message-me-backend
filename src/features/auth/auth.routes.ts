@@ -6,12 +6,13 @@ import {
   loginSchema,
 } from "#validations/user.validation.ts";
 
-import { loginUser, registerUser } from "./auth.controller.ts";
+import { loginUser, refreshToken, registerUser } from "./auth.controller.ts";
 
 const router = Router();
 
 router
-  .post("/user/register", validateBody(registrationSchema), registerUser)
-  .post("/user/login", validateBody(loginSchema), loginUser);
+  .post("/register", validateBody(registrationSchema), registerUser)
+  .post("/login", validateBody(loginSchema), loginUser)
+  .post("/refresh", refreshToken)
 
 export default router;

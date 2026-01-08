@@ -2,8 +2,6 @@ import "dotenv/config";
 import { SignJWT, jwtVerify } from "jose";
 import { createSecretKey } from "crypto";
 
-import { hashPassword as hashString } from "./password.ts";
-
 export type JWTPayload = {
   id: string;
   username: string;
@@ -34,14 +32,12 @@ export const signRefreshToken = (payload: JWTPayload) => {
     .setExpirationTime("7d")
     .sign(secretKey);
 };
-export const storeRefToken = async (token: string, userId: string) => {
-  const hashedToken = await hashString(token);
-  
-};
 
-export const verifyToken = async (token: string): Promise<JWTPayload> => {
-  const secret = accessSecret();
+export const verifyToken = async (
+  token: string,
+  type: "access" | "refresh"
+): Promise<JWTPayload> => {
+  const secret = type === "access" ? accessSecret() : refreshSecret();
   const { payload } = await jwtVerify(token, secret);
-  console.log(payload);
   return { id: payload.id as string, username: payload.username as string };
 };
