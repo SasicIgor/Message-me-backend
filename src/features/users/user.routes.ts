@@ -10,12 +10,12 @@ import { updateUserSchema } from "#validations/user.validation.ts";
 const router = Router();
 
 router
-  .get("/user/:username", findByUsername)
+  .get("/:username", authMiddleware, findByUsername)
   .patch(
-    "/user/update",
+    "/update",
     authMiddleware,
     validateBody(updateUserSchema),
     updateUser
   )
-  .delete("/user/delete", authMiddleware, deleteUser);
+  .delete("/delete", authMiddleware, deleteUser);
 export default router;

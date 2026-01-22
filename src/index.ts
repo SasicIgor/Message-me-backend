@@ -1,9 +1,9 @@
 import "dotenv/config";
 
-import app from "./server.ts";
+import httpServer from "./server.ts";
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server is listening on port http://localhost:${PORT}`);
 });

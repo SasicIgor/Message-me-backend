@@ -16,7 +16,7 @@ import { UnauthorizedError } from "#errors/unauthorized.error.ts";
 export const registerUser = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { username, password, confirmedPassword, email } = req.body;
@@ -28,7 +28,7 @@ export const registerUser = async (
     }
     if (password !== confirmedPassword) {
       throw new BadRequestError(
-        "Password must be the same as confirmed password"
+        "Password must be the same as confirmed password",
       );
     }
     const hashedPassword = await hashString(password);
@@ -51,15 +51,15 @@ export const registerUser = async (
     const hashedRefToken = await hashString(refreshToken);
     const { expiresAt } = await authService.storeRefreshToken(
       hashedRefToken,
-      newUser.id
+      newUser.id,
     );
 
     res
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: true,
-        sameSite: "strict",
         expires: expiresAt,
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+        secure: process.env.NODE_ENV === "production",
       })
       .status(201)
       .json({
@@ -74,7 +74,7 @@ export const registerUser = async (
 export const loginUser = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { username, password } = req.body;
@@ -88,7 +88,7 @@ export const loginUser = async (
     const hashedRefToken = await hashString(refreshToken);
     const { expiresAt } = await authService.storeRefreshToken(
       hashedRefToken,
-      storedUser.id
+      storedUser.id,
     );
 
     const token = await signAccessToken({ id: storedUser.id, username });
@@ -97,9 +97,9 @@ export const loginUser = async (
       .status(200)
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        sameSite: "strict",
         expires: expiresAt,
-        secure: true,
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+        secure: process.env.NODE_ENV === "production",
       })
       .json({
         message: "Successfully logged in",
@@ -115,42 +115,37 @@ export const loginUser = async (
 export const refreshToken = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
+    //checks if the http cookie only exist
     const refToken = req.cookies.refreshToken;
     if (!refToken) {
-      return res.status(200).json({
-        message: "No cookie attached!",
-        data: {
-          user: null,
-          accessToken: null,
-        },
-      });
+      throw new UnauthorizedError("No cookie attachted");
     }
 
+    //verifying the token to get the user
     const { id, username } = await verifyToken(refToken, "refresh");
-
     if (!id) {
       throw new UnauthorizedError("Invalid token sent!");
     }
+
+    //check against stored hashed token in database
     const { hashedToken, expiresAt } = await authService.getRefreshToken(id);
-
     const isValid = await compareString(refToken, hashedToken);
-
     if (!isValid) {
       throw new UnauthorizedError("Invalid token sent!");
     }
 
+    //if passed all errors, sign new access token
     const accessToken = await signAccessToken({ id, username });
 
-    const today = new Date().getTime();
-    const expDate = expiresAt.getTime();
-    //2 days
-    const twoDaysMs = 1000 * 60 * 60 * 24 * 2;
-    const isLessThen2Days = expDate - today > twoDaysMs ? false : true;
+    //check the expiration date of the DB token
+    //if its less then 2 days, make a new one and remove the old one
+    const shouldRotateRefToken =
+      expiresAt.getTime() - Date.now() < 1000 * 60 * 60 * 24 * 2;
 
-    if (isLessThen2Days) {
+    if (shouldRotateRefToken) {
       const newRefToken = await signRefreshToken({ id, username });
       const hashToken = await hashString(newRefToken);
 
@@ -159,7 +154,8 @@ export const refreshToken = async (
       return res
         .cookie("refreshToken", newRefToken, {
           httpOnly: true,
-          sameSite: true,
+          sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+          secure: process.env.NODE_ENV === "production",
           expires: expiresAt,
         })
         .status(200)
