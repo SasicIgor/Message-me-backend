@@ -64,7 +64,7 @@ export const registerUser = async (
       .status(201)
       .json({
         message: "New user created!",
-        data: [{ user: newUser, token: accessToken }],
+        data: { user: newUser, token: accessToken },
       });
   } catch (error) {
     next(error);
@@ -94,16 +94,16 @@ export const loginUser = async (
     const token = await signAccessToken({ id: storedUser.id, username });
 
     res
-      .status(200)
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
         expires: expiresAt,
         sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
         secure: process.env.NODE_ENV === "production",
       })
+      .status(200)
       .json({
         message: "Successfully logged in",
-        data: [{ user: storedUser, token }],
+        data: { user: storedUser, token },
       });
   } catch (error) {
     next(error);

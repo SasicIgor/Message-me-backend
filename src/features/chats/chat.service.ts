@@ -48,7 +48,7 @@ const chatService = {
   async findOrCreatePrivateChat(
     userId: string,
     memberId: string
-  ): Promise<SingleChatBasic[]> {
+  ): Promise<SingleChatBasic> {
     //user is one who made request, memeber is other party of the 1v1 chat
     try {
       //find a member from the chat and throw error if it doesn't exist
@@ -71,7 +71,7 @@ const chatService = {
         .groupBy(chat_member.chatId)
         .having(sql`COUNT(*)=2`);
       if (existingChat) {
-        return [{ ...otherMember, id: existingChat.chatId }];
+        return { ...otherMember, id: existingChat.chatId };
       }
 
       //create a new chat if there is no existing one\
@@ -87,7 +87,7 @@ const chatService = {
           { userId: membersId[1], chatId: newChat.id },
         ]);
         const data = { ...otherMember, ...newChat };
-        return [data];
+        return data;
       });
 
       return createdChat;
@@ -98,9 +98,9 @@ const chatService = {
   async createGroupChat(
     memberIds: string[],
     name: string
-  ): Promise<GroupChatBasicInfo[]> {
+  ): Promise<GroupChatBasicInfo> {
     try {
-      const newGroupChat = await db.transaction(async (tx) => {
+      const [newGroupChat] = await db.transaction(async (tx) => {
         const allUsersExist = await tx
           .select({ id: users.id })
           .from(users)
@@ -174,9 +174,9 @@ const chatService = {
     _userId: string,
     chatId: string,
     name: string
-  ): Promise<ChatBasicInfo[]> {
+  ): Promise<ChatBasicInfo> {
     try {
-      const result = await db.transaction(async (tx) => {
+      const [result] = await db.transaction(async (tx) => {
         const updatedChat = await tx
           .update(chat)
           .set({ name })

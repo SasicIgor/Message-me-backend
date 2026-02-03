@@ -5,12 +5,11 @@ import { messageService } from "./message.service.ts";
 import { type Message } from "#db/neon/schema.ts";
 import { type AuthenticatedRequest } from "#middleware/auth.middleware.ts";
 import { getUserAndChat } from "#utils/getUserAndChat.ts";
-import { io } from "#server.ts";
 
 export const getMessages = async (
   req: AuthenticatedRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { chatId } = getUserAndChat(req);
@@ -24,13 +23,12 @@ export const getMessages = async (
 export const createMessage = async (
   req: AuthenticatedRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { chatId, userId } = getUserAndChat(req);
     const { content } = req.body;
     const msg = await messageService.createMessage(chatId, userId, content);
-    io.to(chatId).emit("new message");
     res.status(201).json({ message: "Message created", data: msg });
   } catch (error) {
     next(error);
@@ -39,7 +37,7 @@ export const createMessage = async (
 export const editMessage = async (
   req: AuthenticatedRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { chatId, userId, messageId } = getUserAndChat(req);
@@ -49,9 +47,9 @@ export const editMessage = async (
       chatId,
       userId,
       messageId,
-      content
+      content,
     );
-    res.status(200).json({ message: "Message updated", msg });
+    res.status(200).json({ message: "Message updated", data: msg });
   } catch (error) {
     next(error);
   }
@@ -59,12 +57,12 @@ export const editMessage = async (
 export const deleteMessage = async (
   req: AuthenticatedRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { chatId, userId, messageId } = getUserAndChat(req);
     await messageService.deleteMessage(chatId, userId, messageId);
-    res.status(204);
+    res.status(204).json();
   } catch (error) {
     next(error);
   }
