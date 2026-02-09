@@ -119,15 +119,16 @@ export const refreshToken = async (
 ) => {
   try {
     //checks if the http cookie only exist
+    console.log("REFRESHING ACCESS TOKEN!!!")
     const refToken = req.cookies.refreshToken;
     if (!refToken) {
-      throw new UnauthorizedError("No cookie attachted");
+      throw new BadRequestError("No cookie attachted");
     }
 
     //verifying the token to get the user
     const { id, username } = await verifyToken(refToken, "refresh");
     if (!id) {
-      throw new UnauthorizedError("Invalid token sent!");
+      throw new BadRequestError("Invalid token sent!");
     }
 
     //check against stored hashed token in database
