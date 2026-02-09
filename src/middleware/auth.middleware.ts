@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import { verifyToken, type JWTPayload } from "#utils/jwt.ts";
 import { UnauthorizedError } from "#errors/unauthorized.error.ts";
+import { errors } from "jose";
 //setting up an user in request
 export interface AuthenticatedRequest extends Request {
   user?: JWTPayload;
@@ -10,7 +11,7 @@ export interface AuthenticatedRequest extends Request {
 export const authMiddleware = async (
   req: AuthenticatedRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const authHeaeder =
@@ -32,6 +33,10 @@ export const authMiddleware = async (
     req.user = payload;
     next();
   } catch (error) {
+    if (error instanceof errors.JWTExpired) {
+      console.log("error in middleware");
+      throw new UnauthorizedError("Refresh the access token!");
+    }
     console.log("ERROR: ", error);
     return next(error);
   }
