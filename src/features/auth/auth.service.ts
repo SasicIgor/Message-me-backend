@@ -4,11 +4,11 @@ import { db } from "#db/neon/connection.ts";
 import { refreshToken, type User, users } from "#db/neon/schema.ts";
 
 import { compareString } from "#utils/password.ts";
-import { UnauthorizedError } from "#errors/unauthorized.error.ts";
+import { BadRequestError } from "#errors/bad-request.error.ts";
 
 export const authService = {
   async registerUser(
-    data: Pick<User, "username" | "email" | "password">
+    data: Pick<User, "username" | "email" | "password">,
   ): Promise<Pick<User, "id" | "username">> {
     try {
       const [newUser] = await db
@@ -23,10 +23,10 @@ export const authService = {
 
   async loginUser(
     username: string,
-    pass: string
+    pass: string,
   ): Promise<Pick<User, "id" | "username">> {
     try {
-      const [{ password, ...storedUser }] = await db
+      const [storedUser] = await db
         .select({
           id: users.id,
           username: users.username,
@@ -34,16 +34,18 @@ export const authService = {
         })
         .from(users)
         .where(eq(users.username, username));
+
       if (!storedUser) {
-        throw new UnauthorizedError("Invalid credentials!");
+        throw new BadRequestError("Invalid credentials!");
       }
 
+      const { password, ...existingUserInfo } = storedUser;
       const isPassCorrect = await compareString(pass, password);
 
       if (!isPassCorrect) {
-        throw new UnauthorizedError("Invalid credentials!");
+        throw new BadRequestError("Invalid credentials!");
       }
-      return storedUser;
+      return existingUserInfo;
     } catch (error) {
       throw error;
     }
