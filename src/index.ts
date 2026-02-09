@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import httpServer from "./server.ts";
+import { httpServer } from "./server.ts";
 
 const PORT = process.env.PORT || 3000;
 

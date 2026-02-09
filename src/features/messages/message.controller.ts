@@ -5,6 +5,7 @@ import { messageService } from "./message.service.ts";
 import { type Message } from "#db/neon/schema.ts";
 import { type AuthenticatedRequest } from "#middleware/auth.middleware.ts";
 import { getUserAndChat } from "#utils/getUserAndChat.ts";
+import { getIO } from "#socket/socket.ts";
 
 export const getMessages = async (
   req: AuthenticatedRequest,
@@ -29,6 +30,8 @@ export const createMessage = async (
     const { chatId, userId } = getUserAndChat(req);
     const { content } = req.body;
     const msg = await messageService.createMessage(chatId, userId, content);
+    const io = getIO();
+    io.to(chatId).emit("message:new", { chatId });
     res.status(201).json({ message: "Message created", data: msg });
   } catch (error) {
     next(error);
