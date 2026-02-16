@@ -3,8 +3,8 @@ export type ChatBasicInfo = {
   id: string;
   name: string | null;
   isGroup: boolean;
-  memberUsername?: string;
-  memberId?: string | string[];
+  memberUsername?: string | null;
+  memberId?: string | string[] | null;
 };
 
 export type SingleChatBasic = Required<

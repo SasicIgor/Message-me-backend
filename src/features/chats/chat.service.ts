@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 
 import type {
   SingleChatBasic,
@@ -12,40 +12,39 @@ import { chat, chat_member, users } from "#db/neon/schema.ts";
 import { DatabaseError } from "#errors/database.error.ts";
 import { BadRequestError } from "#errors/bad-request.error.ts";
 import { UnauthorizedError } from "#errors/unauthorized.error.ts";
+import { alias } from "drizzle-orm/pg-core";
 
 const chatService = {
   async getAllChats(userId: string): Promise<ChatBasicInfo[]> {
     try {
-      const chats = await db.query.chat_member.findMany({
-        where: eq(chat_member.userId, userId),
-        with: { chat: { with: { chatMembers: { with: { user: true } } } } },
-      });
+      const otherMember = alias(chat_member, "otherMember");
+      const otherUser = alias(users, "otherUser");
 
-      const formatedData = chats.map((data) => {
-        if (data.chat.isGroup) {
-          return {
-            id: data.chatId,
-            name: data.chat.name,
-            isGroup: data.chat.isGroup,
-          };
-        }
-        const otherUser = data.chat.chatMembers.find(
-          (m) => m.userId !== userId,
-        );
-        if (!otherUser)
-          throw new DatabaseError(
-            "No other user found for a chat. Invalid key",
-          );
-        return {
-          id: data.chatId,
-          name: data.chat.name,
-          isGroup: data.chat.isGroup,
-          memberUsername: otherUser.user.username,
-          memberId: otherUser.user.id,
-        };
-      });
-      return formatedData;
+      const chats = await db
+        .select({
+          id: chat.id,
+          isGroup: chat.isGroup,
+          name: chat.name,
+          memberUsername: otherUser.username,
+          memberId: otherUser.id,
+        })
+        .from(chat_member)
+        .innerJoin(chat, eq(chat_member.chatId, chat.id))
+        .leftJoin(
+          otherMember,
+          and(
+            eq(chat.isGroup, false),
+            eq(otherMember.chatId, chat.id),
+            ne(otherMember.userId, userId),
+          ),
+        )
+        .leftJoin(otherUser, eq(otherMember.userId, otherUser.id))
+        .where(eq(chat_member.userId, userId))
+        .orderBy(desc(chat.lastUpdatedAt));
+
+      return chats;
     } catch (error) {
+      console.log("ERROR: ", error);
       throw error;
     }
   },
