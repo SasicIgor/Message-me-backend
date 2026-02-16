@@ -1,7 +1,7 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "#db/neon/connection.ts";
-import { type Message, message } from "#db/neon/schema.ts";
+import { chat, type Message, message } from "#db/neon/schema.ts";
 
 import { BadRequestError } from "#errors/bad-request.error.ts";
 
@@ -30,11 +30,19 @@ export const messageService = {
     content: string,
   ): Promise<Message> {
     try {
-      const [msg] = await db
-        .insert(message)
-        .values({ content, chatId, senderId })
-        .returning();
-      return msg;
+      const newMsg = db.transaction(async (tx) => {
+        const [msg] = await tx
+          .insert(message)
+          .values({ content, chatId, senderId })
+          .returning();
+        await tx
+          .update(chat)
+          .set({ lastUpdatedAt: sql`now()` })
+          .where(eq(chat.id, chatId));
+        return msg;
+      });
+
+      return newMsg;
     } catch (error) {
       throw error;
     }
