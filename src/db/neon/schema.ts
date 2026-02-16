@@ -21,13 +21,14 @@ export const users = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
-  (t) => [uniqueIndex("username_idx").on(t.username)]
+  (t) => [uniqueIndex("username_idx").on(t.username)],
 );
 
 export const chat = pgTable("chat", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 50 }).default("New Group"),
   isGroup: boolean("is_group").default(false).notNull(),
+  lastUpdatedAt: timestamp("last_updated_at").defaultNow(),
 });
 
 export const chat_member = pgTable(
@@ -43,7 +44,7 @@ export const chat_member = pgTable(
   (t) => [
     primaryKey({ columns: [t.userId, t.chatId] }),
     index("chat_member_chat_id_idx").on(t.chatId),
-  ]
+  ],
 );
 
 export const message = pgTable(
@@ -59,7 +60,7 @@ export const message = pgTable(
     content: varchar("content").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (t) => [index("msg_chat").on(t.chatId), index("created_at").on(t.createdAt)]
+  (t) => [index("msg_chat").on(t.chatId), index("created_at").on(t.createdAt)],
 );
 
 export const refreshToken = pgTable(
@@ -72,7 +73,7 @@ export const refreshToken = pgTable(
     createdAt: timestamp("created_at").defaultNow(),
     expiresAt: timestamp("expires_at").notNull(),
   },
-  (t) => [uniqueIndex("refresh_token_idx").on(t.userId)]
+  (t) => [uniqueIndex("refresh_token_idx").on(t.userId)],
 );
 
 //relations
