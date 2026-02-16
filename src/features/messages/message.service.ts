@@ -11,6 +11,13 @@ export const messageService = {
       return await db.query.message.findMany({
         where: and(eq(message.chatId, chatId)),
         orderBy: [desc(message.createdAt)],
+        with: {
+          user: {
+            columns: {
+              username: true,
+            },
+          },
+        },
       });
     } catch (error) {
       throw error;
@@ -20,7 +27,7 @@ export const messageService = {
   async createMessage(
     chatId: string,
     senderId: string,
-    content: string
+    content: string,
   ): Promise<Message> {
     try {
       const [msg] = await db
@@ -37,7 +44,7 @@ export const messageService = {
     chatId: string,
     senderId: string,
     messageId: string,
-    content: string
+    content: string,
   ): Promise<Message> {
     try {
       const [result] = await db
@@ -47,8 +54,8 @@ export const messageService = {
           and(
             eq(message.id, messageId),
             eq(message.senderId, senderId),
-            eq(message.chatId, chatId)
-          )
+            eq(message.chatId, chatId),
+          ),
         )
         .returning();
       if (!result) throw new BadRequestError("No message to edit");
@@ -61,7 +68,7 @@ export const messageService = {
   async deleteMessage(
     chatId: string,
     senderId: string,
-    messageId: string
+    messageId: string,
   ): Promise<void> {
     try {
       await db
@@ -70,8 +77,8 @@ export const messageService = {
           and(
             eq(message.chatId, chatId),
             eq(message.id, messageId),
-            eq(message.senderId, senderId)
-          )
+            eq(message.senderId, senderId),
+          ),
         );
     } catch (error) {
       throw error;

@@ -1,6 +1,10 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 
-import type { SingleChatBasic, ChatBasicInfo, GroupChatBasicInfo } from "./chat.types.ts";
+import type {
+  SingleChatBasic,
+  ChatBasicInfo,
+  GroupChatBasicInfo,
+} from "./chat.types.ts";
 
 import { db } from "#db/neon/connection.ts";
 import { chat, chat_member, users } from "#db/neon/schema.ts";
@@ -26,11 +30,11 @@ const chatService = {
           };
         }
         const otherUser = data.chat.chatMembers.find(
-          (m) => m.userId !== userId
+          (m) => m.userId !== userId,
         );
         if (!otherUser)
           throw new DatabaseError(
-            "No other user found for a chat. Invalid key"
+            "No other user found for a chat. Invalid key",
           );
         return {
           id: data.chatId,
@@ -47,8 +51,8 @@ const chatService = {
   },
   async findOrCreatePrivateChat(
     userId: string,
-    memberId: string
-  ): Promise<SingleChatBasic> {
+    memberId: string,
+  ): Promise<ChatBasicInfo> {
     //user is one who made request, memeber is other party of the 1v1 chat
     try {
       //find a member from the chat and throw error if it doesn't exist
@@ -66,12 +70,17 @@ const chatService = {
         .from(chat_member)
         .innerJoin(chat, eq(chat.id, chat_member.chatId))
         .where(
-          and(eq(chat.isGroup, false), inArray(chat_member.userId, membersId))
+          and(eq(chat.isGroup, false), inArray(chat_member.userId, membersId)),
         )
         .groupBy(chat_member.chatId)
         .having(sql`COUNT(*)=2`);
       if (existingChat) {
-        return { ...otherMember, id: existingChat.chatId };
+        return {
+          ...otherMember,
+          id: existingChat.chatId,
+          isGroup: false,
+          name: null,
+        };
       }
 
       //create a new chat if there is no existing one\
@@ -80,7 +89,7 @@ const chatService = {
         const [newChat] = await tx
           .insert(chat)
           .values({ isGroup: false, name: null })
-          .returning({ id: chat.id });
+          .returning({ id: chat.id, isGroup: chat.isGroup, name: chat.name });
 
         await tx.insert(chat_member).values([
           { userId: membersId[0], chatId: newChat.id },
@@ -97,8 +106,8 @@ const chatService = {
   },
   async createGroupChat(
     memberIds: string[],
-    name: string
-  ): Promise<GroupChatBasicInfo> {
+    name: string,
+  ): Promise<ChatBasicInfo> {
     try {
       const [newGroupChat] = await db.transaction(async (tx) => {
         const allUsersExist = await tx
@@ -125,15 +134,18 @@ const chatService = {
           .values(
             memberIds.map((memberId) => {
               return { userId: memberId, chatId: newChat.id };
-            })
+            }),
           )
           .returning({ userId: chat_member.userId });
 
         if (chat_members.length !== memberIds.length)
           throw new DatabaseError(
-            "Failed to insert all users to chat_members!"
+            "Failed to insert all users to chat_members!",
           );
-        return [newChat];
+
+        const storedMembers = chat_members.map((u) => u.userId);
+
+        return [{ ...newChat, memberId: storedMembers }];
       });
       return newGroupChat;
     } catch (error) {
@@ -146,7 +158,7 @@ const chatService = {
         const isUserChatMember = await tx.query.chat_member.findFirst({
           where: and(
             eq(chat_member.chatId, chatId),
-            eq(chat_member.userId, userId)
+            eq(chat_member.userId, userId),
           ),
           with: { chat: true },
         });
@@ -159,8 +171,8 @@ const chatService = {
             .where(
               and(
                 eq(chat_member.chatId, chatId),
-                eq(chat_member.userId, userId)
-              )
+                eq(chat_member.userId, userId),
+              ),
             );
           return;
         }
@@ -173,7 +185,7 @@ const chatService = {
   async updateChatName(
     _userId: string,
     chatId: string,
-    name: string
+    name: string,
   ): Promise<ChatBasicInfo> {
     try {
       const [result] = await db.transaction(async (tx) => {
@@ -192,7 +204,7 @@ const chatService = {
   async updateChatMember(
     userId: string,
     chatId: string,
-    memberId: string
+    memberId: string,
   ): Promise<{ message: string }> {
     //userId is one who sent request, memberId is person being added/removed
     //1. user adding another user
@@ -217,7 +229,7 @@ const chatService = {
         if (!existingChat)
           throw new BadRequestError("You can't update private chat.");
         const alreadyMember = existingChat.chatMembers.find(
-          (member) => member.userId === memberId
+          (member) => member.userId === memberId,
         );
         if (alreadyMember) {
           await tx
@@ -225,8 +237,8 @@ const chatService = {
             .where(
               and(
                 eq(chat_member.chatId, chatId),
-                eq(chat_member.userId, memberId)
-              )
+                eq(chat_member.userId, memberId),
+              ),
             );
 
           return {

@@ -4,7 +4,7 @@ export type ChatBasicInfo = {
   name: string | null;
   isGroup: boolean;
   memberUsername?: string;
-  memberId?: string;
+  memberId?: string | string[];
 };
 
 export type SingleChatBasic = Required<
