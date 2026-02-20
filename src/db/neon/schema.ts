@@ -31,6 +31,8 @@ export const chat = pgTable(
     name: varchar("name", { length: 50 }).default("New Group"),
     isGroup: boolean("is_group").default(false).notNull(),
     lastUpdatedAt: timestamp("last_updated_at").defaultNow(),
+    lastMessageId: uuid("last_message_id"),
+    lastMessageSnippet: varchar("last_message_snippet", { length: 100 }),
   },
   (t) => [index("last_updated_at").on(t.lastUpdatedAt)],
 );
@@ -86,9 +88,13 @@ export const userRelations = relations(users, ({ many }) => ({
   chatMembers: many(chat_member),
 }));
 
-export const chatRelations = relations(chat, ({ many }) => ({
+export const chatRelations = relations(chat, ({ many, one }) => ({
   messages: many(message),
   chatMembers: many(chat_member),
+  lastMessage: one(message, {
+    fields: [chat.lastMessageId],
+    references: [message.id],
+  }),
 }));
 
 export const chatMemberRelations = relations(chat_member, ({ one }) => ({

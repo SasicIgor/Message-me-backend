@@ -29,6 +29,13 @@
       "when": 1771605511614,
       "tag": "0003_pale_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1771606048492,
+      "tag": "0004_tired_famine",
+      "breakpoints": true
     }
   ]
 }
