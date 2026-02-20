@@ -1,0 +1,1 @@
+CREATE INDEX "last_updated_at" ON "chat" USING btree ("last_updated_at");
