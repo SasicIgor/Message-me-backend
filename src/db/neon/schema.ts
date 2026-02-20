@@ -24,12 +24,16 @@ export const users = pgTable(
   (t) => [uniqueIndex("username_idx").on(t.username)],
 );
 
-export const chat = pgTable("chat", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar("name", { length: 50 }).default("New Group"),
-  isGroup: boolean("is_group").default(false).notNull(),
-  lastUpdatedAt: timestamp("last_updated_at").defaultNow(),
-});
+export const chat = pgTable(
+  "chat",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: varchar("name", { length: 50 }).default("New Group"),
+    isGroup: boolean("is_group").default(false).notNull(),
+    lastUpdatedAt: timestamp("last_updated_at").defaultNow(),
+  },
+  (t) => [index("last_updated_at").on(t.lastUpdatedAt)],
+);
 
 export const chat_member = pgTable(
   "chat_member",
