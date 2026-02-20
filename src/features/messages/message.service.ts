@@ -37,7 +37,11 @@ export const messageService = {
           .returning();
         await tx
           .update(chat)
-          .set({ lastUpdatedAt: sql`now()` })
+          .set({
+            lastMessageId: msg.id,
+            lastMessageSnippet: msg.content,
+            lastUpdatedAt: sql`now()`,
+          })
           .where(eq(chat.id, chatId));
         return msg;
       });

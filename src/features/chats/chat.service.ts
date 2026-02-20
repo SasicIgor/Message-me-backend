@@ -1,10 +1,6 @@
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 
-import type {
-  SingleChatBasic,
-  ChatBasicInfo,
-  GroupChatBasicInfo,
-} from "./chat.types.ts";
+import type { ChatBasicInfo } from "./chat.types.ts";
 
 import { db } from "#db/neon/connection.ts";
 import { chat, chat_member, users } from "#db/neon/schema.ts";
@@ -24,6 +20,8 @@ const chatService = {
         .select({
           id: chat.id,
           isGroup: chat.isGroup,
+          lastMessageId: chat.lastMessageId,
+          lastMessageSnippet: chat.lastMessageSnippet,
           name: chat.name,
           memberUsername: otherUser.username,
           memberId: otherUser.id,

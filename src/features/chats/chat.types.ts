@@ -5,13 +5,6 @@ export type ChatBasicInfo = {
   isGroup: boolean;
   memberUsername?: string | null;
   memberId?: string | string[] | null;
+  lastMessageSnippet?: string | null;
+  lastMessageId?: string | null;
 };
-
-export type SingleChatBasic = Required<
-  Pick<ChatBasicInfo, "id" | "memberId" | "memberUsername">
->;
-
-//creating group chat
-export type GroupChatBasicInfo = Required<
-  Pick<ChatBasicInfo, "id" | "name" | "isGroup">
->;
