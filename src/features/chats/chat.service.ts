@@ -40,7 +40,13 @@ const chatService = {
         .where(eq(chat_member.userId, userId))
         .orderBy(desc(chat.lastUpdatedAt));
 
-      return chats;
+      return chats.map((chat) => ({
+        ...chat,
+        lastMessageSnippet:
+          chat.lastMessageSnippet && chat.lastMessageSnippet.length > 20
+            ? chat.lastMessageSnippet.substring(0, 20).trim() + "..."
+            : chat.lastMessageSnippet,
+      }));
     } catch (error) {
       console.log("ERROR: ", error);
       throw error;
