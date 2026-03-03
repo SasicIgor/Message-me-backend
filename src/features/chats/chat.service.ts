@@ -9,6 +9,7 @@ import { DatabaseError } from "#errors/database.error.ts";
 import { BadRequestError } from "#errors/bad-request.error.ts";
 import { UnauthorizedError } from "#errors/unauthorized.error.ts";
 import { alias } from "drizzle-orm/pg-core";
+import { msgSnippet } from "#utils/messageSnipppet.ts";
 
 const chatService = {
   async getAllChats(userId: string): Promise<ChatBasicInfo[]> {
@@ -22,6 +23,7 @@ const chatService = {
           isGroup: chat.isGroup,
           lastMessageId: chat.lastMessageId,
           lastMessageSnippet: chat.lastMessageSnippet,
+          unreadCount: chat_member.unreadCount,
           name: chat.name,
           memberUsername: otherUser.username,
           memberId: otherUser.id,
@@ -42,10 +44,7 @@ const chatService = {
 
       return chats.map((chat) => ({
         ...chat,
-        lastMessageSnippet:
-          chat.lastMessageSnippet && chat.lastMessageSnippet.length > 20
-            ? chat.lastMessageSnippet.substring(0, 20).trim() + "..."
-            : chat.lastMessageSnippet,
+        lastMessageSnippet: msgSnippet(chat.lastMessageSnippet),
       }));
     } catch (error) {
       console.log("ERROR: ", error);
