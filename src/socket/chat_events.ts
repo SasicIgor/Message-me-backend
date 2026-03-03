@@ -1,10 +1,14 @@
 import { Socket } from "socket.io";
 
 export const chatSocket = (socket: Socket) => {
-  socket.on("chat:join_many", (chatIds: string[], callback) => {
-    console.log("hey, i'm joining these rooms: ", chatIds);
-    socket.join(chatIds);
-    callback("ok");
+  socket.on("chat:join_room", (chatId: string) => {
+    console.log("hey, i'm joining this room: ", chatId);
+    socket.join(chatId);
+  });
+
+  socket.on("chat:leave_room", (chatId: string) => {
+    console.log("hey, i left the room: ", chatId);
+    socket.leave(chatId);
   });
 
   socket.on(
