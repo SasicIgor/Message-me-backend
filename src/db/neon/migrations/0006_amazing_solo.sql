@@ -1,0 +1,1 @@
+ALTER TABLE "chat_member" ALTER COLUMN "unread_count" SET DEFAULT 0;

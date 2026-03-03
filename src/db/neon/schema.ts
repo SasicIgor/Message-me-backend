@@ -7,6 +7,7 @@ import {
   primaryKey,
   uniqueIndex,
   index,
+  integer,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -46,6 +47,7 @@ export const chat_member = pgTable(
     chatId: uuid("chat_id")
       .references(() => chat.id, { onDelete: "cascade" })
       .notNull(),
+    unreadCount: integer("unread_count").default(0),
   },
   (t) => [
     primaryKey({ columns: [t.userId, t.chatId] }),

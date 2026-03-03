@@ -1,0 +1,1 @@
+ALTER TABLE "chat_member" ADD COLUMN "unread_count" integer;

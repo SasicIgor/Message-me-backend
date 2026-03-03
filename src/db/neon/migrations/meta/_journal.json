@@ -36,6 +36,20 @@
       "when": 1771606048492,
       "tag": "0004_tired_famine",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1771947796380,
+      "tag": "0005_perfect_nekra",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771951570981,
+      "tag": "0006_amazing_solo",
+      "breakpoints": true
     }
   ]
 }
