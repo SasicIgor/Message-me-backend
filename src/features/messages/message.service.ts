@@ -1,24 +1,36 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, notInArray, sql } from "drizzle-orm";
 
 import { db } from "#db/neon/connection.ts";
-import { chat, type Message, message } from "#db/neon/schema.ts";
+import { chat, chat_member, type Message, message } from "#db/neon/schema.ts";
 
 import { BadRequestError } from "#errors/bad-request.error.ts";
 
 export const messageService = {
-  async getMessages(chatId: string): Promise<Message[]> {
+  async getMessages(chatId: string, userId: string): Promise<Message[]> {
     try {
-      return await db.query.message.findMany({
-        where: and(eq(message.chatId, chatId)),
-        orderBy: [desc(message.createdAt)],
-        with: {
-          user: {
-            columns: {
-              username: true,
-            },
-          },
-        },
+      const msgs = await db.transaction(async (tx) => {
+        const msgList = await tx
+          .select({
+            id: message.id,
+            chatId: message.chatId,
+            senderId: message.senderId,
+            content: message.content,
+            createdAt: message.createdAt,
+          })
+          .from(message)
+          .where(eq(message.chatId, chatId))
+          .orderBy(desc(message.createdAt));
+
+        await tx
+          .update(chat_member)
+          .set({ unreadCount: 0 })
+          .where(
+            and(eq(chat_member.chatId, chatId), eq(chat_member.userId, userId)),
+          );
+        return msgList;
       });
+
+      return msgs;
     } catch (error) {
       throw error;
     }
@@ -28,13 +40,17 @@ export const messageService = {
     chatId: string,
     senderId: string,
     content: string,
-  ): Promise<Message> {
+    activeUsers: string[],
+  ): Promise<{ msg: Message; countUpdatedUserIds: string[] }> {
     try {
-      const newMsg = db.transaction(async (tx) => {
+      const newMsgData = db.transaction(async (tx) => {
+        //create a new message in the chat
         const [msg] = await tx
           .insert(message)
           .values({ content, chatId, senderId })
           .returning();
+
+        //update chat for interaction
         await tx
           .update(chat)
           .set({
@@ -43,10 +59,24 @@ export const messageService = {
             lastUpdatedAt: sql`now()`,
           })
           .where(eq(chat.id, chatId));
-        return msg;
+
+        //update unreadCount for users that are offline
+        //or currently looking other chat
+        const users = await tx
+          .update(chat_member)
+          .set({ unreadCount: sql`${chat_member.unreadCount} + 1` })
+          .where(
+            and(
+              eq(chat_member.chatId, chatId),
+              notInArray(chat_member.userId, activeUsers),
+            ),
+          )
+          .returning({ memberId: chat_member.userId });
+        const countUpdatedUserIds = users.map((u) => u.memberId);
+        return { msg, countUpdatedUserIds };
       });
 
-      return newMsg;
+      return newMsgData;
     } catch (error) {
       throw error;
     }
