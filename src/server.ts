@@ -13,7 +13,7 @@ import messageRouter from "#features/messages/message.routes.ts";
 import chatRouter from "#features/chats/chat.routes.ts";
 
 import { errorMiddleware } from "#middleware/error.middleware.ts";
-import { initSocket } from "./socket/socket.ts";
+import { initSocket, type IOServer } from "./socket/socket.ts";
 import { registerSockets } from "#socket/index.ts";
 import { UnauthorizedError } from "#errors/unauthorized.error.ts";
 import { verifyToken } from "#utils/jwt.ts";
@@ -22,7 +22,7 @@ import { errors } from "jose";
 const app = express();
 const httpServer = createServer(app);
 
-const io = new Server(httpServer, {
+const io: IOServer = new Server(httpServer, {
   cors: {
     origin: [process.env.CLIENT_URL as string],
     methods: ["GET", "POST"],
@@ -57,7 +57,8 @@ io.use((socket, next) => {
 
 io.on("connection", (socket) => {
   console.log("[!!! CONNECTED USER !!!]: ", socket.id);
-
+  //join users to the room of their ID
+  socket.join(socket.data.user.id);
   registerSockets(socket);
 
   socket.on("disconnect", () => {
