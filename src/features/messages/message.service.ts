@@ -1,4 +1,4 @@
-import { and, desc, eq, notInArray, sql } from "drizzle-orm";
+import { and, asc, eq, notInArray, sql } from "drizzle-orm";
 
 import { db } from "#db/neon/connection.ts";
 import { chat, chat_member, type Message, message } from "#db/neon/schema.ts";
@@ -19,7 +19,7 @@ export const messageService = {
           })
           .from(message)
           .where(eq(message.chatId, chatId))
-          .orderBy(desc(message.createdAt));
+          .orderBy(asc(message.createdAt));
 
         await tx
           .update(chat_member)
@@ -68,7 +68,7 @@ export const messageService = {
           .where(
             and(
               eq(chat_member.chatId, chatId),
-              notInArray(chat_member.userId, activeUsers),
+              notInArray(chat_member.userId, [...activeUsers, senderId]),
             ),
           )
           .returning({ memberId: chat_member.userId });
