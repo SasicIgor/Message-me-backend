@@ -58,7 +58,7 @@ export const registerUser = async (
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
         expires: expiresAt,
-        sameSite: "none",
+        sameSite: process.env.NODE_ENV === "PRODUCTION" ? "none" : "lax",
         secure: process.env.NODE_ENV === "PRODUCTION",
       })
       .status(201)
@@ -97,7 +97,7 @@ export const loginUser = async (
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
         expires: expiresAt,
-        sameSite: "none",
+        sameSite: process.env.NODE_ENV === "PRODUCTION" ? "none" : "lax",
         secure: process.env.NODE_ENV === "PRODUCTION",
       })
       .status(200)
@@ -119,7 +119,7 @@ export const refreshToken = async (
 ) => {
   try {
     //checks if the http cookie only exist
-    console.log("REFRESHING ACCESS TOKEN!!!")
+    console.log("REFRESHING ACCESS TOKEN!!!");
     const refToken = req.cookies.refreshToken;
     if (!refToken) {
       throw new BadRequestError("No cookie attachted");
@@ -155,7 +155,7 @@ export const refreshToken = async (
       return res
         .cookie("refreshToken", newRefToken, {
           httpOnly: true,
-          sameSite: "none",
+          sameSite: process.env.NODE_ENV === "PRODUCTION" ? "none" : "lax",
           secure: process.env.NODE_ENV === "PRODUCTION",
           expires: expiresAt,
         })

@@ -26,11 +26,14 @@ const io: IOServer = new Server(httpServer, {
   cors: {
     origin: [process.env.CLIENT_URL as string],
     methods: ["GET", "POST"],
+    credentials: true,
   },
+  pingTimeout: 25000,
+  pingInterval: 15000,
 });
-
 initSocket(io);
 
+//socket middleware
 io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth.token;
@@ -47,12 +50,6 @@ io.use(async (socket, next) => {
     if (error instanceof Error) next(error);
     throw new Error("Error occured in socket middleware!");
   }
-});
-
-io.use((socket, next) => {
-  const transport = socket.conn.transport.name;
-  console.log(`Socket ${socket.id} is using: ${transport}`);
-  next();
 });
 
 io.on("connection", (socket) => {
@@ -83,6 +80,11 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/messages", messageRouter);
 app.use("/api/v1/chats", chatRouter);
+
+//health check for server
+app.get("/api/v1/health", (req, res) => {
+  res.status(200).json();
+});
 
 //error handler
 app.use(errorMiddleware);
