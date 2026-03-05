@@ -58,8 +58,8 @@ export const registerUser = async (
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
         expires: expiresAt,
-        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "PRODUCTION" ? "strict" : "lax",
+        secure: process.env.NODE_ENV === "PRODUCTION",
       })
       .status(201)
       .json({
@@ -97,8 +97,8 @@ export const loginUser = async (
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
         expires: expiresAt,
-        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "PRODUCTION" ? "strict" : "lax",
+        secure: process.env.NODE_ENV === "PRODUCTION",
       })
       .status(200)
       .json({
@@ -155,8 +155,8 @@ export const refreshToken = async (
       return res
         .cookie("refreshToken", newRefToken, {
           httpOnly: true,
-          sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "PRODUCTION" ? "strict" : "lax",
+          secure: process.env.NODE_ENV === "PRODUCTION",
           expires: expiresAt,
         })
         .status(200)
